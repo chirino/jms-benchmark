@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.stomp.benchmark
+package org.fusesource.amqp.benchmark
 
 import java.util.concurrent.atomic._
 import java.util.concurrent.TimeUnit._
@@ -66,15 +66,14 @@ trait Scenario {
   var consumers_per_sample = 0
   var sample_interval = 1000
   var host = "127.0.0.1"
-  var port = 61613
+  var port = 5671
   var buffer_size = 32*1024
   var message_size = 1024
   var content_length=true
   var persistent = false
   var persistent_header = "persistent:true"
   var sync_send = false
-  var headers = Array[Array[String]]()
-  var ack = "auto"
+  var headers = Array[Array[(String,String)]]()
   var selector:String = null
   var durable = false
   var consumer_prefix = "consumer-"
@@ -186,7 +185,6 @@ trait Scenario {
     "  --- Consumer Properties ---\n"+
     "  consumers             = "+consumers+"\n"+
     "  consumer_sleep (ms)   = "+consumer_sleep+"\n"+
-    "  ack                   = "+ack+"\n"+
     "  selector              = "+selector+"\n"+
     "  durable               = "+durable+"\n"+
     "  consumer_prefix       = "+consumer_prefix+"\n"+
@@ -204,7 +202,7 @@ trait Scenario {
 
   protected def headers_for(i:Int) = {
     if ( headers.isEmpty ) {
-      Array[String]()
+      Array()
     } else {
       headers(i%headers.size)
     }

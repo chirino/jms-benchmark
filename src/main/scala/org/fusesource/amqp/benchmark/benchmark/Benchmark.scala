@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.stomp.benchmark
+package org.fusesource.amqp.benchmark
 
 import scala.collection.mutable.HashMap
 
@@ -62,7 +62,7 @@ class Benchmark extends Action {
   @option(name = "--host", description = "server host name")
   var host = "127.0.0.1"
   @option(name = "--port", description = "server port")
-  var port = 61613
+  var port = 5671
 
   @option(name = "--login", description = "login name to connect with")
   var login:String = null
@@ -113,8 +113,6 @@ class Benchmark extends Action {
   var queue_prefix = "/queue/"
   @option(name = "--topic-prefix", description = "prefix used for topic destiantion names.")
   var topic_prefix = "/topic/"
-  @option(name = "--blocking-io", description = "Should the clients use blocking io.")
-  var blocking_io = false
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var drain_timeout = 3000L
 
@@ -173,15 +171,15 @@ class Benchmark extends Action {
     null
   }
 
-  private def benchmark(name:String, drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null, blocking:Boolean=blocking_io)(init_func: (Scenario)=>Unit ):Unit = {
-    multi_benchmark(List(name), drain, sc, is_done, blocking) { scenarios =>
+  private def benchmark(name:String, drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (Scenario)=>Unit ):Unit = {
+    multi_benchmark(List(name), drain, sc, is_done) { scenarios =>
       init_func(scenarios.head)
     }
   }
 
-  private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null, blocking:Boolean=blocking_io)(init_func: (List[Scenario])=>Unit ):Unit = {
+  private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (List[Scenario])=>Unit ):Unit = {
     val scenarios:List[Scenario] = names.map { name=>
-      val scenario = if(blocking) new BlockingScenario else new NonBlockingScenario
+      val scenario = new FuseSourceClientScenario
       scenario.name = name
       scenario.sample_interval = sample_interval
       scenario.host = host
@@ -369,7 +367,7 @@ class Benchmark extends Action {
           return errors >= scenario_connection_scale_rate || remaining <= 0
         }
 
-        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done, false) { scenario=>
+        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done) { scenario=>
           scenario.message_size = 20
           scenario.producers = 0
           scenario.messages_per_connection = messages_per_connection
@@ -413,7 +411,7 @@ class Benchmark extends Action {
           case List(producer:Scenario, red:Scenario, blue:Scenario) =>
             producer.message_size = 20
             producer.producers = 2
-            producer.headers = Array(Array("color:red"), Array("color:blue"))
+            producer.headers = Array(Array("color"->"red"), Array("color"->"blue"))
             producer.persistent = false
             producer.sync_send = false
             producer.destination_count = 1
