@@ -60,7 +60,7 @@ class Benchmark extends Action {
   var broker_name:String = _
 
   @option(name = "--host", description = "server host name")
-  var host = "127.0.0.1"
+  var host = "localhost"
   @option(name = "--port", description = "server port")
   var port = 5671
 

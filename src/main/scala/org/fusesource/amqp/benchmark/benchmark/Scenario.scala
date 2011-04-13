@@ -66,8 +66,8 @@ trait Scenario {
   var consumers = 1
   var consumers_per_sample = 0
   var sample_interval = 1000
-  var host = "127.0.0.1"
-  var port = 5671
+  var host = "localhost"
+  var port = 5672
   var buffer_size = 32*1024
   var message_size = 1024
   var content_length=true
@@ -93,8 +93,8 @@ trait Scenario {
   val error_counter = new AtomicLong()
   val done = new AtomicBoolean()
 
-  var queue_prefix = "/queue/"
-  var topic_prefix = "/topic/"
+  var queue_prefix = "queue:"
+  var topic_prefix = "topic:"
   var name = "custom"
 
   var drain_timeout = 2000L

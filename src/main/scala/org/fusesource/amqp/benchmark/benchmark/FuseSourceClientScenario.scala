@@ -41,7 +41,7 @@ class FuseSourceClientScenario extends Scenario {
     new ConsumerClient(i)
   }
 
-  trait NonBlockingClient extends Client {
+  trait FuseSourceClient extends Client {
 
     val connection = AmqpConnectionFactory.create
 
@@ -185,9 +185,11 @@ class FuseSourceClientScenario extends Scenario {
     }
 
     def connect(proc: =>Unit) = {
+//      println(name+" connecting..")
       queue_check
       if( !done.get ) {
         open(host, port) {
+//          println(name+" connected..")
           proc
         }
       }
@@ -196,7 +198,7 @@ class FuseSourceClientScenario extends Scenario {
     def name:String
   }
 
-  class ConsumerClient(val id: Int) extends NonBlockingClient {
+  class ConsumerClient(val id: Int) extends FuseSourceClient {
     val name: String = "consumer " + id
     queue.setLabel(name)
 
@@ -207,6 +209,7 @@ class FuseSourceClientScenario extends Scenario {
       connect {
         session = connection.createSession
         session.begin(^{
+//          println(name+" session created")
 
           receiver = session.createReceiver
           receiver.setName(name+" - receiver")
@@ -251,6 +254,8 @@ class FuseSourceClientScenario extends Scenario {
             }
           })
           receiver.attach(^{
+//            println(name+" receiver attached")
+
           })
         })
       }
@@ -259,7 +264,7 @@ class FuseSourceClientScenario extends Scenario {
 
   }
 
-  class ProducerClient(val id: Int) extends NonBlockingClient {
+  class ProducerClient(val id: Int) extends FuseSourceClient {
 
     val name: String = "producer " + id
     queue.setLabel(name)
@@ -268,18 +273,16 @@ class FuseSourceClientScenario extends Scenario {
     var sender:Sender = _
 
     override def reconnect_action = {
-      println("connecting..")
       connect {
-        println("connected..")
         session = connection.createSession
         session.begin(^ {
 
-          println("session created..")
+//          println(name+" session created..")
           sender = session.createSender
           sender.setName(name + "sender")
           sender.setAddress(destination(id))
           sender.attach(^{
-            println("sender created..")
+//            println(name+" sender created..")
             send_next
           })
         })
@@ -288,7 +291,6 @@ class FuseSourceClientScenario extends Scenario {
     }
 
     def send_next:Unit = {
-      println("sending next..")
       val message = sender.createMessage
       message.setSettled(!sync_send)
       message.getHeader.setDurable(durable)
@@ -307,6 +309,7 @@ class FuseSourceClientScenario extends Scenario {
 
       def send_completed:Unit = {
         message_counter += 1
+        producer_counter.incrementAndGet()
 
         def continue_sending = {
           if(messages_per_connection > 0 && message_counter >= messages_per_connection  ) {
