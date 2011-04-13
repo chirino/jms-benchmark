@@ -1,4 +1,4 @@
-# Stomp Benchmark
+# AMQP Benchmark
 
 A benchmarking tool for [AMQP](http://www.amqp.org) servers.
 

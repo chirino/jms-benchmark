@@ -69,8 +69,7 @@ class FuseSourceClientScenario extends Scenario {
                 state = CONNECTED()
                 on_complete()
               } else {
-                // on_failure(receiver_connection.error)
-                on_failure(new IOException("connect failed."))
+                on_failure(connection.error)
               }
             }
           }
@@ -269,13 +268,18 @@ class FuseSourceClientScenario extends Scenario {
     var sender:Sender = _
 
     override def reconnect_action = {
+      println("connecting..")
       connect {
+        println("connected..")
         session = connection.createSession
         session.begin(^ {
+
+          println("session created..")
           sender = session.createSender
           sender.setName(name + "sender")
           sender.setAddress(destination(id))
           sender.attach(^{
+            println("sender created..")
             send_next
           })
         })
@@ -284,7 +288,7 @@ class FuseSourceClientScenario extends Scenario {
     }
 
     def send_next:Unit = {
-
+      println("sending next..")
       val message = sender.createMessage
       message.setSettled(!sync_send)
       message.getHeader.setDurable(durable)
