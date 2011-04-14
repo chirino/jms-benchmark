@@ -43,7 +43,7 @@ class FuseSourceClientScenario extends Scenario {
 
   trait FuseSourceClient extends Client {
 
-    val connection = AmqpConnectionFactory.create
+    var connection = AmqpConnectionFactory.create
 
     def queue = connection.getDispatchQueue
 
@@ -60,6 +60,8 @@ class FuseSourceClientScenario extends Scenario {
 
 
       def connect() = {
+        connection = AmqpConnectionFactory.create
+        connection.setOnClose(^{on_close})
         connection.connect("tcp://" + host + ":" + port, ^ {
           if ( this == state ) {
             if(done.get) {
@@ -87,7 +89,7 @@ class FuseSourceClientScenario extends Scenario {
       if( reconnect_delay==0 ) {
         connect
       } else {
-        queue.after(5, TimeUnit.SECONDS) {
+        queue.after(1, TimeUnit.SECONDS) {
           if ( this == state ) {
             reconnect_delay=0
             connect
@@ -97,10 +99,8 @@ class FuseSourceClientScenario extends Scenario {
 
       def close() = {
         if( connection.connected ) {
+          connection.close
           state = CLOSING()
-          connection.close(^{
-            state = DISCONNECTED()
-          })
         } else {
           state = DISCONNECTED()
         }
@@ -120,10 +120,12 @@ class FuseSourceClientScenario extends Scenario {
     case class CONNECTED() extends State {
 
       def close() = {
-        state = CLOSING()
-        connection.close(^{
+        if( connection.connected ) {
+          connection.close
+          state = CLOSING()
+        } else {
           state = DISCONNECTED()
-        })
+        }
       }
 
       def on_failure(e:Throwable) = {
@@ -149,6 +151,24 @@ class FuseSourceClientScenario extends Scenario {
         }
       }
     }
+
+
+    def on_close:Unit = {
+      if( done.get ) {
+        has_shutdown.countDown
+      } else {
+        if( connection.error !=null ) {
+          state match {
+            case x:CONNECTING => x.on_failure(connection.error)
+            case x:CONNECTED => x.on_failure(connection.error)
+            case _ =>
+          }
+        } else {
+          state = DISCONNECTED()
+        }
+      }
+    }
+
 
     var state:State = INIT()
 
