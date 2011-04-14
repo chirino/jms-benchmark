@@ -62,7 +62,7 @@ class Benchmark extends Action {
   @option(name = "--host", description = "server host name")
   var host = "localhost"
   @option(name = "--port", description = "server port")
-  var port = 5671
+  var port = 5672
 
   @option(name = "--login", description = "login name to connect with")
   var login:String = null
@@ -110,9 +110,9 @@ class Benchmark extends Action {
   var scenario_slow_consumer = false
 
   @option(name = "--queue-prefix", description = "prefix used for queue destiantion names.")
-  var queue_prefix = "/queue/"
+  var queue_prefix = "queue:"
   @option(name = "--topic-prefix", description = "prefix used for topic destiantion names.")
-  var topic_prefix = "/topic/"
+  var topic_prefix = "topic:"
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var drain_timeout = 3000L
 
