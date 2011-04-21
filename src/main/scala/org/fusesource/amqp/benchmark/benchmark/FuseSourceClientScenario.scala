@@ -233,14 +233,26 @@ class FuseSourceClientScenario extends Scenario {
 
           receiver = session.createReceiver
           receiver.setName(name+" - receiver")
-          receiver.enableFlowControl(true)
           receiver.setAddress(destination(id))
           receiver.setListener(new MessageListener {
+
+            if (consumer_sleep != 0) {
+              queue.after(1, TimeUnit.SECONDS) {
+                receiver.addLinkCredit(10)
+              }
+            }
 
             var sleeping = false
             var _refiller = ^{}
 
-            def needLinkCredit(available: Long) = available.max(1)
+            def needLinkCredit(available: Long) = {
+              if (consumer_sleep != 0) {
+                0
+              } else {
+                available.max(10)
+              }
+            }
+
             def refiller(refiller: Runnable) = _refiller = refiller
 
             def full = sleeping
@@ -254,6 +266,7 @@ class FuseSourceClientScenario extends Scenario {
                   if ( !message.getSettled ) {
                     receiver.settle(message, Outcome.ACCEPTED)
                   }
+                  receiver.addLinkCredit(1)
                 }
 
                 val c_sleep = consumer_sleep
