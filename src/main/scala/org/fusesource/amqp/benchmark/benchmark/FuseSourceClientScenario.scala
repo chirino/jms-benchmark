@@ -249,7 +249,7 @@ class FuseSourceClientScenario extends Scenario {
               if (consumer_sleep != 0) {
                 0
               } else {
-                available.max(10)
+                available.max(20)
               }
             }
 
@@ -266,7 +266,6 @@ class FuseSourceClientScenario extends Scenario {
                   if ( !message.getSettled ) {
                     receiver.settle(message, Outcome.ACCEPTED)
                   }
-                  receiver.addLinkCredit(1)
                 }
 
                 val c_sleep = consumer_sleep
@@ -275,9 +274,14 @@ class FuseSourceClientScenario extends Scenario {
                   queue.after(math.abs(c_sleep), TimeUnit.MILLISECONDS) {
                     sleeping = false
                     settle
+                    receiver.addLinkCredit(1)
                     _refiller.run
                   }
                 } else {
+                  val available = receiver.getAvailableLinkCredit
+                  if (available != null && available.longValue < 5) {
+                    receiver.addLinkCredit(20 - available.longValue)
+                  }
                   settle
                 }
 
