@@ -1,6 +1,6 @@
 {
   "benchmark_settings": {
-    "broker_name": "foo",
+    "broker_name": "Apollo 1.0-SNAPSHOT",
     "host": "localhost",
     "port": 5672,
     "sample_count": 15,
