@@ -23,7 +23,6 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import org.fusesource.fabric.apollo.amqp.api._
 import org.fusesource.fabric.apollo.amqp.codec.types.TypeFactory._
 import org.fusesource.hawtbuf.Buffer._
-import org.fusesource.amqp.benchmark.Scenario
 
 /**
  * <p>
