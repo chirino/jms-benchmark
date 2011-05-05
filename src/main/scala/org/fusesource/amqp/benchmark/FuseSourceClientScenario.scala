@@ -20,8 +20,8 @@ package org.fusesource.amqp.benchmark
 import java.io._
 import org.fusesource.hawtdispatch._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-import org.fusesource.fusemq.amqp.api._
-import org.fusesource.fusemq.amqp.codec.types.TypeFactory._
+import org.fusesource.fabric.apollo.amqp.api._
+import org.fusesource.fabric.apollo.amqp.codec.types.TypeFactory._
 import org.fusesource.hawtbuf.Buffer._
 
 /**
