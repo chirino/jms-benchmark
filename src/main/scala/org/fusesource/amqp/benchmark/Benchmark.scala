@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fusesource.amqp.benchmark
+package com.github.stomp.benchmark
 
 import scala.collection.mutable.HashMap
 
@@ -60,9 +60,9 @@ class Benchmark extends Action {
   var broker_name:String = _
 
   @option(name = "--host", description = "server host name")
-  var host = "localhost"
+  var host = "127.0.0.1"
   @option(name = "--port", description = "server port")
-  var port = 5672
+  var port = 61613
 
   @option(name = "--login", description = "login name to connect with")
   var login:String = null
@@ -83,8 +83,8 @@ class Benchmark extends Action {
   var enable_topics = true
   @option(name = "--enable-queues", description = "enable benchmarking the queue scenarios")
   var enable_queues = true
-  @option(name = "--enable-peristence", description = "enable benchmarking the peristent scenarios")
-  var enable_peristence = true
+  @option(name = "--enable-persistent", description = "enable benchmarking the persistent scenarios")
+  var enable_persistence = true
 
   @option(name = "--scenario-connection-scale", description = "enable the connection scale scenarios")
   var scenario_connection_scale = false
@@ -110,9 +110,11 @@ class Benchmark extends Action {
   var scenario_slow_consumer = false
 
   @option(name = "--queue-prefix", description = "prefix used for queue destiantion names.")
-  var queue_prefix = "queue:"
+  var queue_prefix = "/queue/"
   @option(name = "--topic-prefix", description = "prefix used for topic destiantion names.")
-  var topic_prefix = "topic:"
+  var topic_prefix = "/topic/"
+  @option(name = "--blocking-io", description = "Should the clients use blocking io.")
+  var blocking_io = false
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var drain_timeout = 3000L
 
@@ -171,15 +173,15 @@ class Benchmark extends Action {
     null
   }
 
-  private def benchmark(name:String, drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (Scenario)=>Unit ):Unit = {
-    multi_benchmark(List(name), drain, sc, is_done) { scenarios =>
+  private def benchmark(name:String, drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null, blocking:Boolean=blocking_io)(init_func: (Scenario)=>Unit ):Unit = {
+    multi_benchmark(List(name), drain, sc, is_done, blocking) { scenarios =>
       init_func(scenarios.head)
     }
   }
 
-  private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (List[Scenario])=>Unit ):Unit = {
+  private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null, blocking:Boolean=blocking_io)(init_func: (List[Scenario])=>Unit ):Unit = {
     val scenarios:List[Scenario] = names.map { name=>
-      val scenario = new FuseSourceClientScenario
+      val scenario = if(blocking) new BlockingScenario else new NonBlockingScenario
       scenario.name = name
       scenario.sample_interval = sample_interval
       scenario.host = host
@@ -307,7 +309,7 @@ class Benchmark extends Action {
   def run_benchmarks = {
 
 
-    val persistence_values = if (enable_peristence) {
+    val persistence_values = if (enable_persistence) {
       List(false, true)
     } else {
       List(false)
@@ -322,7 +324,7 @@ class Benchmark extends Action {
     }
 
 
-    if( enable_peristence && scenario_queue_loading ) {
+    if( enable_persistence && scenario_queue_loading ) {
       for( persistent <- List(false, true)) {
         val size = 20
 
@@ -367,7 +369,7 @@ class Benchmark extends Action {
           return errors >= scenario_connection_scale_rate || remaining <= 0
         }
 
-        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done) { scenario=>
+        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done, false) { scenario=>
           scenario.message_size = 20
           scenario.producers = 0
           scenario.messages_per_connection = messages_per_connection
@@ -411,7 +413,7 @@ class Benchmark extends Action {
           case List(producer:Scenario, red:Scenario, blue:Scenario) =>
             producer.message_size = 20
             producer.producers = 2
-            producer.headers = Array(Array("color"->"red"), Array("color"->"blue"))
+            producer.headers = Array(Array("color:red"), Array("color:blue"))
             producer.persistent = false
             producer.sync_send = false
             producer.destination_count = 1
