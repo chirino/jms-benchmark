@@ -1,18 +1,19 @@
-# AMQP Benchmark
+# JMS Benchmark
 
-A benchmarking tool for [AMQP](http://www.amqp.org) servers.
+A benchmarking tool for [JMS](http://en.wikipedia.org/wiki/Java_Message_Service) servers.
 
 ## Build Prep
 
 * Install [sbt](http://code.google.com/p/simple-build-tool/wiki/Setup) but instead 
   of setting up the sbt script to use `sbt-launch.jar "$@"` please use `sbt-launch.jar "$*"` instead.
   
-* run: `sbt update` in the stomp-benchmark project directory
+* run: `sbt update` in the jms-benchmark project directory
 
 ## Running the Benchmark
 
-The benchmark assumes that a AMQP 1.0 server is running on the local host on port 5671.
-Use the `sbt run` command to execute the benchmark.  Run `sbt run --help` to get a listing
+The benchmark is hardwired to test an ActiveMQ JMS server running locally.  
+
+Run `sbt run --help` to get a listing
 of all the command line arguments that the benchmark supports.
 
 For each broker you are benchmarking you will typically execute:

@@ -29,7 +29,7 @@
       
       //
       // Update the following array to add more
-      // amqp servers to the comparison 
+      // JMS servers to the comparison 
       //
       var products = [
         'apollo-1.0-SNAPSHOT', 
@@ -258,7 +258,7 @@
     
     <div id='wrap'>
       <div id='header'>
-        <h1>AMQP 1.0 Server Performance Comparisons</h1>
+        <h1>JMS 1.1 Server Performance Comparisons</h1>
       </div>
       <div id='content'>
         <h2>Table of Contents</h2>
@@ -271,14 +271,14 @@
         
         <h2 id="throughput_to_topic">Overview</h2>
         <p>
-          This report was generated using the <a href="http://github.com/chirino/amqp-benchmark">amqp-benchmark tool</a>.  It 
-          provides a comparative benchmark of messaging servers that implement the <a href="http://www.amqp.org/">AMQP 1.0</a> 
+          This report was generated using the <a href="http://github.com/chirino/stomp-benchmark">JMS-benchmark tool</a>.  It 
+          provides a comparative benchmark of messaging servers that implement the <a href="http://en.wikipedia.org/wiki/Java_Message_Service">JMS 1.1</a> 
           specification.  It covers a wide variety of common usage scenarios. Each scenario is warmed up for 3 seconds before 
           the performance samples are taken.
         </p>
         
         <div>
-          Show data for the AMQP 1.0 server run on:
+          Show data for the JMS 1.1 server run on:
           <select id="platform">
             <option value="osx-8-core" selected="selected">OS X, Dual 4 Core CPUs</option>
             <!-- <option value="ubuntu-intel-2600k" >Ubuntu Single 4 Core 2600K CPU</option>
@@ -301,7 +301,7 @@
         </script>        
         <div style="padding: 1em 1em 0em 3em;">
           <!-- <div id="ubuntu-intel-2600k">
-            The AMQP 1.0 server was run on a:
+            The JMS 1.1 server was run on a:
             <ul>
               <li>CPU: 3.4 GHz Intel 2600K</li>
               <li>Memory: 8 GB 2000 MHz DDR3</li>
@@ -309,7 +309,7 @@
               <li>Disk: SATA 7200 RPM</li>
               <li>Java: OpenJDK 64-Bit 1.6.0_20</li>
             </ul>
-            The amqp clients were run on:
+            The JMS clients were run on:
             <ul>
               <li>Mac Pro Model: MacPro3,1</li>
               <li>CPU: 2 x 3 GHz Quad-Core Intel Xeon</li>
@@ -321,7 +321,7 @@
             The two machines were connected via 1 GigE.
           </div>
           <div id="win7-intel-2600k" style="display:none"e>
-            The AMQP 1.0 server was run on a:
+            The JMS 1.1 server was run on a:
             <ul>
               <li>CPU: 3.4 GHz Intel 2600K</li>
               <li>Memory: 8 GB 2000 MHz DDR3</li>
@@ -329,7 +329,7 @@
               <li>Disk: SATA 6 Gb/s SSD (355MB read/140MB write)</li>
               <li>Java: 64-Bit 1.6.0_24-b07</li>
             </ul>
-            The amqp clients were run on:
+            The JMS clients were run on:
             <ul>
               <li>Mac Pro Model: MacPro3,1</li>
               <li>CPU: 2 x 3 GHz Quad-Core Intel Xeon</li>
@@ -341,7 +341,7 @@
             The two machines were connected via 1 GigE.
           </div>       -->    
           <div id="osx-8-core">
-            The benchmark load generator and  AMQP 1.0 server was run on a machine with:
+            The benchmark load generator and  JMS 1.1 server was run on a machine with:
             <ul>
               <li>Mac Pro Model: MacPro3,1</li>
               <li>CPU: 2 x 3 GHz Quad-Core Intel Xeon</li>
