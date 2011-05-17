@@ -34,7 +34,7 @@
     <scala-version>2.9.0</scala-version>
     <maven-scala-plugin-version>2.15.0</maven-scala-plugin-version>
     <karaf-version>2.1.0</karaf-version>
-    <slf4j-version>1.6.0</slf4j-version>
+    <slf4j-version>1.5.11</slf4j-version>
 
   </properties>
 
@@ -58,7 +58,7 @@
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-core</artifactId>
-      <version>5.4.2</version>
+      <version>5.6-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.fusesource.stompjms</groupId>
