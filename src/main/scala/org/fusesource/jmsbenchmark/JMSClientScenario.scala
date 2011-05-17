@@ -17,20 +17,18 @@
  */
 package org.fusesource.jmsbenchmark
 
-import org.apache.activemq.spring.ActiveMQConnectionFactory
 import java.lang.Thread
 import javax.jms._
 import org.apache.activemq.command.{ActiveMQTopic, ActiveMQQueue}
-import sun.tools.tree.WhileStatement
 
 /**
  * <p>
- * Simulates load on a JMS sever.
+ * Simulates load on a JMS sever using the JMS messaging API.
  * </p>
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-class JMSClientScenario extends Scenario {
+abstract class JMSClientScenario extends Scenario {
 
   def createProducer(i:Int) = {
     new ProducerClient(i)
@@ -39,19 +37,16 @@ class JMSClientScenario extends Scenario {
     new ConsumerClient(i)
   }
 
-  protected def destination(i:Int) = destination_type match {
-    case "queue" => new ActiveMQQueue(queue_prefix+destination_name+"-"+(i%destination_count))
-    case "topic" => new ActiveMQTopic(topic_prefix+destination_name+"-"+(i%destination_count))
-    case _ => throw new Exception("Unsuported destination type: "+destination_type)
+  protected def destination(i:Int):Destination
+
+  def indexed_destination_name(i:Int) = destination_type match {
+    case "queue" => queue_prefix+destination_name+"-"+(i%destination_count)
+    case "topic" => topic_prefix+destination_name+"-"+(i%destination_count)
+    case _ => sys.error("Unsuported destination type: "+destination_type)
   }
 
-  def factory = {
-    val rc = new ActiveMQConnectionFactory
-    rc.setBrokerURL(url)
-    rc.setUserName(user_name)
-    rc.setPassword(password)
-    rc
-  }
+
+  protected def factory:ConnectionFactory
 
   def jms_ack_mode = {
     ack_mode match {
@@ -79,7 +74,7 @@ class JMSClientScenario extends Scenario {
               Thread.sleep(reconnect_delay)
               reconnect_delay=0
             }
-            connection = factory.createConnection()
+            connection = factory.createConnection(user_name, password)
             connection.setClientID(name)
             connection.setExceptionListener(new ExceptionListener {
               def onException(exception: JMSException) {

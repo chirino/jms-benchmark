@@ -57,13 +57,16 @@ object Benchmark {
 @command(scope="stomp", name = "benchmark", description = "The Stomp benchmarking tool")
 class Benchmark extends Action {
 
-  @option(name = "--broker_name", description = "The name of the broker being benchmarked.")
+  @option(name = "--provider", description = "The type of provider being benchmarked.")
+  var provider:String = "activemq"
+
+  @option(name = "--broker-name", description = "The name of the broker being benchmarked.")
   var broker_name:String = _
 
   @option(name = "--url", description = "server url")
   var url = "tcp://127.0.0.1:61616"
 
-  @option(name = "--user_name", description = "login name to connect with")
+  @option(name = "--user-name", description = "login name to connect with")
   var user_name:String = null
   @option(name = "--password", description = "password to connect with")
   var password:String = null
@@ -173,9 +176,16 @@ class Benchmark extends Action {
     }
   }
 
+  def create_scenario:JMSClientScenario = {
+    provider.toLowerCase match {
+      case "activemq" => new ActiveMQScenario
+      case "stomp" => new StompScenario
+    }
+  }
+
   private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (List[Scenario])=>Unit ):Unit = {
     val scenarios:List[Scenario] = names.map { name=>
-      val scenario = new JMSClientScenario
+      val scenario = create_scenario
       scenario.name = name
       scenario.sample_interval = sample_interval
       scenario.url = url
