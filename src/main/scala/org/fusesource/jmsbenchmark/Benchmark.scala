@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.stomp.benchmark
+package org.fusesource.jmsbenchmark
 
 import scala.collection.mutable.HashMap
 
@@ -42,7 +42,7 @@ object Benchmark {
     val action = new Benchmark()
     val p = new DefaultActionPreparator
     try {
-      if( p.prepare(action, session, JavaConversions.asJavaList(args.toList)) ) {
+      if( p.prepare(action, session, JavaConversions.seqAsJavaList(args.toList)) ) {
         action.execute(session)
       }
     } catch {
@@ -59,15 +59,13 @@ class Benchmark extends Action {
   @option(name = "--broker_name", description = "The name of the broker being benchmarked.")
   var broker_name:String = _
 
-  @option(name = "--host", description = "server host name")
-  var host = "127.0.0.1"
-  @option(name = "--port", description = "server port")
-  var port = 61613
+  @option(name = "--url", description = "server url")
+  var url = "tcp://127.0.0.1:61616"
 
-  @option(name = "--login", description = "login name to connect with")
-  var login:String = null
-  @option(name = "--passcode", description = "passcode to connect with")
-  var passcode:String = null
+  @option(name = "--user_name", description = "login name to connect with")
+  var user_name:String = null
+  @option(name = "--password", description = "password to connect with")
+  var password:String = null
 
   @option(name = "--sample-count", description = "number of samples to take")
   var sample_count = 15
@@ -113,13 +111,9 @@ class Benchmark extends Action {
   var queue_prefix = "/queue/"
   @option(name = "--topic-prefix", description = "prefix used for topic destiantion names.")
   var topic_prefix = "/topic/"
-  @option(name = "--blocking-io", description = "Should the clients use blocking io.")
-  var blocking_io = false
+
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var drain_timeout = 3000L
-
-  @option(name = "--persistent-header", description = "The header to set on persistent messages to make them persistent.")
-  var persistent_header = "persistent:true"
 
   @option(name = "--messages-per-connection", description = "The number of messages that are sent before the client reconnect.")
   var messages_per_connection = -1L
@@ -145,7 +139,7 @@ class Benchmark extends Action {
     }
 
     println("===================================================================")
-    println("Benchmarking %s at: %s:%d".format(broker_name, host, port))
+    println("Benchmarking %s at: %s".format(broker_name, url))
     println("===================================================================")
 
     run_benchmarks
@@ -154,8 +148,7 @@ class Benchmark extends Action {
     os.println("{")
     os.println("""  "benchmark_settings": {""")
     os.println("""    "broker_name": "%s",""".format(broker_name))
-    os.println("""    "host": "%s",""".format(host))
-    os.println("""    "port": %d,""".format(port))
+    os.println("""    "url": "%s",""".format(url))
     os.println("""    "sample_count": %d,""".format(sample_count))
     os.println("""    "sample_interval": %d,""".format(sample_interval))
     os.println("""    "warm_up_count": %d,""".format(warm_up_count))
@@ -173,25 +166,23 @@ class Benchmark extends Action {
     null
   }
 
-  private def benchmark(name:String, drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null, blocking:Boolean=blocking_io)(init_func: (Scenario)=>Unit ):Unit = {
-    multi_benchmark(List(name), drain, sc, is_done, blocking) { scenarios =>
+  private def benchmark(name:String, drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (Scenario)=>Unit ):Unit = {
+    multi_benchmark(List(name), drain, sc, is_done) { scenarios =>
       init_func(scenarios.head)
     }
   }
 
-  private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null, blocking:Boolean=blocking_io)(init_func: (List[Scenario])=>Unit ):Unit = {
+  private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (List[Scenario])=>Unit ):Unit = {
     val scenarios:List[Scenario] = names.map { name=>
-      val scenario = if(blocking) new BlockingScenario else new NonBlockingScenario
+      val scenario = new JMSClientScenario
       scenario.name = name
       scenario.sample_interval = sample_interval
-      scenario.host = host
-      scenario.port = port
-      scenario.login = login
-      scenario.passcode = passcode
+      scenario.url = url
+      scenario.user_name = user_name
+      scenario.password = password
       scenario.queue_prefix = queue_prefix
       scenario.topic_prefix = topic_prefix
       scenario.drain_timeout = drain_timeout
-      scenario.persistent_header = persistent_header
       scenario.display_errors = display_errors
       scenario
     }
@@ -324,6 +315,125 @@ class Benchmark extends Action {
     }
 
 
+    // Setup a scenario /w fast and slow consumers
+    if(scenario_slow_consumer) {
+      for( dt <- destination_types) {
+        multi_benchmark(List("20b_1a_1%s_1fast".format(dt), "20b_0_1%s_1slow".format(dt))) {
+          case List(fast:Scenario, slow:Scenario) =>
+            fast.message_size = 20
+            fast.producers = 1
+            fast.persistent = false
+            fast.destination_count = 1
+            fast.destination_type = dt
+            fast.consumers = 1
+
+            slow.producers = 0
+            slow.destination_count = 1
+            slow.destination_type = dt
+            slow.consumer_sleep = 100 // He can only process 10 /sec
+            slow.consumers = 1
+        }
+      }
+    }
+
+    // Setup selecting consumers on 1 destination.
+    if( scenario_selector ) {
+      for( dt <- destination_types) {
+        multi_benchmark(List("20b_color_2a_1%s_0".format(dt), "20b_0_1%s_1_red".format(dt), "20b_0_1%s_1_blue".format(dt))) {
+          case List(producer:Scenario, red:Scenario, blue:Scenario) =>
+            producer.message_size = 20
+            producer.producers = 2
+            producer.headers = Array(Array(("color", "red")), Array(("color", "blue")))
+            producer.persistent = false
+            producer.destination_count = 1
+            producer.destination_type = dt
+            producer.consumers = 0
+
+            red.producers = 0
+            red.destination_count = 1
+            red.destination_type = dt
+            red.selector = "color='red'"
+            red.consumers = 1
+
+            blue.producers = 0
+            blue.destination_count = 1
+            blue.destination_type = dt
+            blue.selector = "color='blue'"
+            blue.consumers = 1
+        }
+      }
+    }
+
+    if( enable_topics && scenario_producer_throughput ) {
+      // Benchmark for figuring out the max producer throughput
+      for( size <- List(20, 1024, 1024 * 256) ) {
+        val name = "%s_1a_1topic_0".format(mlabel(size))
+        benchmark(name) { g=>
+          g.message_size = size
+          g.producers = 1
+          g.persistent = false
+          g.destination_count = 1
+          g.destination_type = "topic"
+          g.consumers = 0
+        }
+      }
+    }
+
+    // Benchmark for the queue parallel load scenario
+    if( scenario_partitioned ) {
+
+      val message_sizes = List(20, 1024, 1024 * 256)
+      val destinations = List(1, 5, 10)
+
+      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
+        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
+        benchmark(name) { g=>
+          g.message_size = size
+          g.producers = load
+          g.persistent = persistent
+          g.destination_count = load
+          g.destination_type = destination_type
+          g.consumers = load
+        }
+      }
+    }
+
+    if( scenario_fan_in_out  ) {
+      val client_count = List(1, 5, 10)
+      val message_sizes = List(20)
+      
+      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
+        if( !(consumers == 1 && producers == 1) ) {
+          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
+          benchmark(name) { g=>
+            g.message_size = size
+            g.producers = producers
+            g.persistent = persistent
+            g.destination_count = 1
+            g.destination_type = destination_type
+            g.consumers = consumers
+          }
+        }
+      }
+    }
+
+    if( enable_topics && scenario_durable_subs) {
+      // Benchmark for durable subscriptions on topics
+      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
+        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
+        benchmark(name) { g=>
+          g.message_size = size
+          g.producers = 1
+          g.persistent = persistent
+          g.destination_count = 1
+          g.destination_type = "topic"
+          g.consumers = load
+          g.durable = true
+        }
+      }
+    }
+
+
     if( enable_persistence && scenario_queue_loading ) {
       for( persistent <- List(false, true)) {
         val size = 20
@@ -333,7 +443,6 @@ class Benchmark extends Action {
         benchmark(name, false, 30) { g=>
           g.message_size = 20
           g.producers = 1
-          g.sync_send = persistent
           g.persistent = persistent
           g.destination_count = 1
           g.destination_type = "queue"
@@ -369,14 +478,13 @@ class Benchmark extends Action {
           return errors >= scenario_connection_scale_rate || remaining <= 0
         }
 
-        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done, false) { scenario=>
+        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done) { scenario=>
           scenario.message_size = 20
           scenario.producers = 0
           scenario.messages_per_connection = messages_per_connection
           scenario.producers_per_sample = scenario_connection_scale_rate
           scenario.producer_sleep = 1000
           scenario.persistent = false
-          scenario.sync_send = false
           scenario.destination_count = 1
           scenario.destination_type = "queue"
           scenario.consumers = 1
@@ -384,129 +492,6 @@ class Benchmark extends Action {
       }
     }
 
-    // Setup a scenario /w fast and slow consumers
-    if(scenario_slow_consumer) {
-      for( dt <- destination_types) {
-        multi_benchmark(List("20b_1a_1%s_1fast".format(dt), "20b_0_1%s_1slow".format(dt))) {
-          case List(fast:Scenario, slow:Scenario) =>
-            fast.message_size = 20
-            fast.producers = 1
-            fast.persistent = false
-            fast.sync_send = false
-            fast.destination_count = 1
-            fast.destination_type = dt
-            fast.consumers = 1
-
-            slow.producers = 0
-            slow.destination_count = 1
-            slow.destination_type = dt
-            slow.consumer_sleep = 100 // He can only process 10 /sec
-            slow.consumers = 1
-        }
-      }
-    }
-
-    // Setup selecting consumers on 1 destination.
-    if( scenario_selector ) {
-      for( dt <- destination_types) {
-        multi_benchmark(List("20b_color_2a_1%s_0".format(dt), "20b_0_1%s_1_red".format(dt), "20b_0_1%s_1_blue".format(dt))) {
-          case List(producer:Scenario, red:Scenario, blue:Scenario) =>
-            producer.message_size = 20
-            producer.producers = 2
-            producer.headers = Array(Array("color:red"), Array("color:blue"))
-            producer.persistent = false
-            producer.sync_send = false
-            producer.destination_count = 1
-            producer.destination_type = dt
-            producer.consumers = 0
-
-            red.producers = 0
-            red.destination_count = 1
-            red.destination_type = dt
-            red.selector = "color='red'"
-            red.consumers = 1
-
-            blue.producers = 0
-            blue.destination_count = 1
-            blue.destination_type = dt
-            blue.selector = "color='blue'"
-            blue.consumers = 1
-        }
-      }
-    }
-
-    if( enable_topics && scenario_producer_throughput ) {
-      // Benchmark for figuring out the max producer throughput
-      for( size <- List(20, 1024, 1024 * 256) ) {
-        val name = "%s_1a_1topic_0".format(mlabel(size))
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = false
-          g.sync_send = false
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = 0
-        }
-      }
-    }
-
-    // Benchmark for the queue parallel load scenario
-    if( scenario_partitioned ) {
-
-      val message_sizes = List(20, 1024, 1024 * 256)
-      val destinations = List(1, 5, 10)
-
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
-        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = load
-          g.persistent = persistent
-          g.sync_send = persistent
-          g.destination_count = load
-          g.destination_type = destination_type
-          g.consumers = load
-        }
-      }
-    }
-
-    if( scenario_fan_in_out  ) {
-      val client_count = List(1, 5, 10)
-      val message_sizes = List(20)
-      
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
-        if( !(consumers == 1 && producers == 1) ) {
-          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
-          benchmark(name) { g=>
-            g.message_size = size
-            g.producers = producers
-            g.persistent = persistent
-            g.sync_send = persistent
-            g.destination_count = 1
-            g.destination_type = destination_type
-            g.consumers = consumers
-          }
-        }
-      }
-    }
-
-    if( enable_topics && scenario_durable_subs) {
-      // Benchmark for durable subscriptions on topics
-      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
-        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = persistent
-          g.sync_send = persistent
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = load
-          g.durable = true
-        }
-      }
-    }
 
   }
 }

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fusesource.amqp.benchmark
+package org.fusesource.jmsbenchmark
 
 import java.util.concurrent.atomic._
 import java.util.concurrent.TimeUnit._
@@ -23,10 +23,8 @@ import scala.collection.mutable.ListBuffer
 
 //object Example {
 //  def main(args:Array[String]):Unit = {
-//    val scenario = new FuseSourceClientScenario
+//    val scenario = new JMSClientScenario
 //    scenario.display_errors = true
-//    scenario.login = "admin"
-//    scenario.passcode = "password"
 //    scenario.run
 //  }
 //}
@@ -47,8 +45,9 @@ object Scenario {
 trait Scenario {
   import Scenario._
 
-  var login:String = _
-  var passcode:String = _
+  var url:String = "tcp://localhost:61616"
+  var user_name:String = _
+  var password:String = _
 
   private var _producer_sleep: { def apply(): Int; def init(time: Long) } = new { def apply() = 0; def init(time: Long) {}  }
   def producer_sleep = _producer_sleep()
@@ -66,18 +65,15 @@ trait Scenario {
   var consumers = 1
   var consumers_per_sample = 0
   var sample_interval = 1000
-  var host = "localhost"
-  var port = 5672
-  var buffer_size = 32*1024
+
   var message_size = 1024
-  var content_length=true
   var persistent = false
-  var persistent_header = "persistent:true"
-  var sync_send = false
+
   var headers = Array[Array[(String,String)]]()
   var selector:String = null
+  var no_local = false
   var durable = false
-  var consumer_prefix = "consumer-"
+  var ack_mode = "auto"
   var messages_per_connection = -1L
   var display_errors = false
 
@@ -93,8 +89,8 @@ trait Scenario {
   val error_counter = new AtomicLong()
   val done = new AtomicBoolean()
 
-  var queue_prefix = "queue:"
-  var topic_prefix = "topic:"
+  var queue_prefix = ""
+  var topic_prefix = ""
   var name = "custom"
 
   var drain_timeout = 2000L
@@ -165,8 +161,6 @@ trait Scenario {
     "--------------------------------------\n"+
     "Scenario Settings\n"+
     "--------------------------------------\n"+
-    "  host                  = "+host+"\n"+
-    "  port                  = "+port+"\n"+
     "  destination_type      = "+destination_type+"\n"+
     "  queue_prefix          = "+queue_prefix+"\n"+
     "  topic_prefix          = "+topic_prefix+"\n"+
@@ -178,8 +172,6 @@ trait Scenario {
     "  producers             = "+producers+"\n"+
     "  message_size          = "+message_size+"\n"+
     "  persistent            = "+persistent+"\n"+
-    "  sync_send             = "+sync_send+"\n"+
-    "  content_length        = "+content_length+"\n"+
     "  producer_sleep (ms)   = "+producer_sleep+"\n"+
     "  headers               = "+headers.mkString(", ")+"\n"+
     "  \n"+
@@ -188,22 +180,13 @@ trait Scenario {
     "  consumer_sleep (ms)   = "+consumer_sleep+"\n"+
     "  selector              = "+selector+"\n"+
     "  durable               = "+durable+"\n"+
-    "  consumer_prefix       = "+consumer_prefix+"\n"+
     ""
 
   }
 
-  protected def destination(i:Int) = destination_type match {
-    case "queue" => queue_prefix+destination_name+"-"+(i%destination_count)
-    case "topic" => topic_prefix+destination_name+"-"+(i%destination_count)
-    case "raw_queue" => destination_name
-    case "raw_topic" => destination_name
-    case _ => throw new Exception("Unsuported destination type: "+destination_type)
-  }
-
   protected def headers_for(i:Int) = {
     if ( headers.isEmpty ) {
-      Array()
+      Array[(String, String)]()
     } else {
       headers(i%headers.size)
     }
