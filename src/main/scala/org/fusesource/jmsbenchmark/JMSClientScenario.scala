@@ -75,7 +75,7 @@ abstract class JMSClientScenario extends Scenario {
               reconnect_delay=0
             }
             connection = factory.createConnection(user_name, password)
-            connection.setClientID(name)
+//            connection.setClientID(name)
             connection.setExceptionListener(new ExceptionListener {
               def onException(exception: JMSException) {
               }
@@ -115,9 +115,12 @@ abstract class JMSClientScenario extends Scenario {
     def shutdown = {
       assert(done.get)
       if ( worker!=null ) {
+        dispose
+        worker.join(1000)
         while(worker.isAlive ) {
+          println("Worker did not shutdown quickly.. interrupting thread.")
           worker.interrupt()
-          worker.join(100)
+          worker.join(1000)
         }
         worker = null
       }

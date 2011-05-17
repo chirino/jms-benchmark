@@ -318,13 +318,66 @@ class Benchmark extends Action {
     }
 
     var destination_types = List[String]()
-    if( enable_queues ) {
-      destination_types ::= "queue"
-    }
     if( enable_topics ) {
       destination_types ::= "topic"
     }
+    if( enable_queues ) {
+      destination_types ::= "queue"
+    }
 
+    // Benchmark for the queue parallel load scenario
+    if( scenario_partitioned ) {
+
+      val message_sizes = List(20, 1024, 1024 * 256)
+      val destinations = List(1, 5, 10)
+
+      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
+        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
+        benchmark(name) { g=>
+          g.message_size = size
+          g.producers = load
+          g.persistent = persistent
+          g.destination_count = load
+          g.destination_type = destination_type
+          g.consumers = load
+        }
+      }
+    }
+
+    if( scenario_fan_in_out  ) {
+      val client_count = List(1, 5, 10)
+      val message_sizes = List(20)
+      
+      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
+        if( !(consumers == 1 && producers == 1) ) {
+          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
+          benchmark(name) { g=>
+            g.message_size = size
+            g.producers = producers
+            g.persistent = persistent
+            g.destination_count = 1
+            g.destination_type = destination_type
+            g.consumers = consumers
+          }
+        }
+      }
+    }
+
+    if( enable_topics && scenario_durable_subs) {
+      // Benchmark for durable subscriptions on topics
+      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
+        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
+        benchmark(name) { g=>
+          g.message_size = size
+          g.producers = 1
+          g.persistent = persistent
+          g.destination_count = 1
+          g.destination_type = "topic"
+          g.consumers = load
+          g.durable = true
+        }
+      }
+    }
 
     // Setup a scenario /w fast and slow consumers
     if(scenario_slow_consumer) {
@@ -388,60 +441,6 @@ class Benchmark extends Action {
           g.destination_count = 1
           g.destination_type = "topic"
           g.consumers = 0
-        }
-      }
-    }
-
-    // Benchmark for the queue parallel load scenario
-    if( scenario_partitioned ) {
-
-      val message_sizes = List(20, 1024, 1024 * 256)
-      val destinations = List(1, 5, 10)
-
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
-        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = load
-          g.persistent = persistent
-          g.destination_count = load
-          g.destination_type = destination_type
-          g.consumers = load
-        }
-      }
-    }
-
-    if( scenario_fan_in_out  ) {
-      val client_count = List(1, 5, 10)
-      val message_sizes = List(20)
-      
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
-        if( !(consumers == 1 && producers == 1) ) {
-          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
-          benchmark(name) { g=>
-            g.message_size = size
-            g.producers = producers
-            g.persistent = persistent
-            g.destination_count = 1
-            g.destination_type = destination_type
-            g.consumers = consumers
-          }
-        }
-      }
-    }
-
-    if( enable_topics && scenario_durable_subs) {
-      // Benchmark for durable subscriptions on topics
-      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
-        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = persistent
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = load
-          g.durable = true
         }
       }
     }
