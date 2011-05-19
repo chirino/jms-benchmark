@@ -112,9 +112,9 @@ class Benchmark extends Action {
   var scenario_slow_consumer = false
 
   @option(name = "--queue-prefix", description = "prefix used for queue destiantion names.")
-  var queue_prefix = "/queue/"
+  var queue_prefix = ""
   @option(name = "--topic-prefix", description = "prefix used for topic destiantion names.")
-  var topic_prefix = "/topic/"
+  var topic_prefix = ""
 
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var drain_timeout = 3000L

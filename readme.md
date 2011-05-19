@@ -28,8 +28,36 @@ will get stored in a `reports/foo-3.2.json` file.
 
 The `reports/report.html` file can load and display the results of multiple benchmark runs.
 You can updated which benchmark results are displayed by the report.html by editing
-it and updating to the line which defines the `broker_files` variable (around line 32).
+it and updating to the line which defines the `products` variable (around line 34).
 
-    var broker_files = ['foo-3.2.json', 'cheese-1.0.json']
+      var products = [
+        'apollo-1.0-SNAPSHOT', 
+        'activemq-5.4.2'
+      ];
+
+### Running against Apollo 1.0-beta2
+
+[Apache Apollo](http://activemq.apache.org/apollo) is a new Stomp based 
+message server from good folks at the [Apache ActiveMQ](http://activemq.apache.org/) 
+project.
+
+1. Follow the [getting started guide](http://activemq.apache.org/apollo/versions/1.0-beta1/website/documentation/getting-started.html) 
+to install, setup, and start the server.
+
+2. Run the benchmark with the admin credentials.  Example:
+
+    sbt run --provider stomp --url tcp://localhost:61613 --user-name admin --password password reports/boxname/apollo-1.0-beta2.json
+
+### Running against ActiveMQ 5.6-SNAPSHOT
+
+[Apache ActiveMQ](http://activemq.apache.org) is the most popular open source JMS provider.
+
+1. Once installed, start the server by running:
+
+    ./bin/activemq console
+
+2. Run the benchmark:
+
+    sbt run --provider activemq --url tcp://localhost:61616 reports/boxname/activemq-5.6-SNAPSHOT.json
 
 
