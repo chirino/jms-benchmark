@@ -54,7 +54,9 @@ to install, setup, and start the server.
 
 1. Once installed, start the server by running:
 
-    ./bin/activemq console
+    cd ${ACTIVEMQ_HOME}
+    export ACTIVEMQ_OPTS_MEMORY="-Xmx2g -XX:+UseLargePages"
+    ./bin/activemq console xbean:conf/activemq-specjms.xml
 
 2. Run the benchmark:
 
