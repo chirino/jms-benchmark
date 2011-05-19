@@ -280,14 +280,15 @@
         <div>
           Show data for the JMS 1.1 server run on:
           <select id="platform">
-            <option value="osx-8-core" selected="selected">OS X, Dual 4 Core CPUs</option>
+            <option value="mbp-2-core" selected="selected">Mac Book Pro 2 Core</option>
+            <option value="osx-8-core">OS X, Dual 4 Core CPUs</option>
             <!-- <option value="ubuntu-intel-2600k" >Ubuntu Single 4 Core 2600K CPU</option>
             <option value="win7-intel-2600k">Windows 7 Single 4 Core 2600K CPU</option>
             <option value="ubuntu-4-core">Ubuntu 4 Core CPUs</option> -->
           </select>
         </div>
         <script>
-          platform = 'osx-8-core';
+          platform = 'mbp-2-core';
           $("select#platform").change(function () {
             $("select#platform option").each(function () {
                $("#"+$(this).attr("value")).hide();
@@ -340,6 +341,17 @@
             </ul>
             The two machines were connected via 1 GigE.
           </div>       -->    
+          <div id="mbp-2-core">
+            The benchmark load generator and JMS 1.1 server was run on a machine with:
+            <ul>
+              <li>Mac Book Pro Model: MacBookPro6,2</li>
+              <li>CPU: 1 x 2 Core 2.66 GHz Intel Core i7</li>
+              <li>Memory: 8 GB</li>
+              <li>OS: Mac OS X 10.6.7</li>
+              <li>Disk: SATA 7200 RPM</li>
+              <li>Java: 64-Bit 1.6.0_22</li>
+            </ul>
+          </div>
           <div id="osx-8-core">
             The benchmark load generator and  JMS 1.1 server was run on a machine with:
             <ul>
