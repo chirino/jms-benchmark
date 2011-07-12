@@ -21,7 +21,7 @@ class StompScenario extends JMSClientScenario {
   override protected def destination(i:Int):Destination = destination_type match {
     case "queue" => new StompJmsQueue(indexed_destination_name(i))
     case "topic" => new StompJmsTopic(indexed_destination_name(i))
-    case _ => sys.error("Unsuported destination type: "+destination_type)
+    case _ => error("Unsuported destination type: "+destination_type)
   }
 
 }
