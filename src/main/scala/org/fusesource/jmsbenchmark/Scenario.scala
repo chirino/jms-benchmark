@@ -23,11 +23,17 @@ import scala.collection.mutable.ListBuffer
 
 //object Example {
 //  def main(args:Array[String]):Unit = {
-//    val scenario = new JMSClientScenario
+//    val scenario = new ActiveMQScenario
+//    scenario.url = "tcp://localhost:61616"
+////    val scenario = new StompScenario
+////    scenario.url = "tcp://localhost:61613"
 //    scenario.display_errors = true
+//    scenario.user_name = "admin"
+//    scenario.password = "password"
 //    scenario.run
 //  }
 //}
+
 
 object Scenario {
   val MESSAGE_ID:Array[Byte] = "message-id"
