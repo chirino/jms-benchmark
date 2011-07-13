@@ -176,11 +176,12 @@ class Benchmark extends Action {
   }
 
   def create_scenario:JMSClientScenario = {
-    getClass.getClassLoader.loadClass(provider.toLowerCase match {
+    val clazz = provider.toLowerCase match {
       case "activemq" => "org.fusesource.jmsbenchmark.ActiveMQScenario"
       case "stomp" => "org.fusesource.jmsbenchmark.StompScenario"
-      case x => x
-    }).newInstance().asInstanceOf[JMSClientScenario]
+      case _ => provider
+    }
+    getClass.getClassLoader.loadClass(clazz).newInstance().asInstanceOf[JMSClientScenario]
   }
 
   private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (List[Scenario])=>Unit ):Unit = {

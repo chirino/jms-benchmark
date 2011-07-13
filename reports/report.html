@@ -34,8 +34,8 @@
       var products = [
         'apollo-1.0-SNAPSHOT', 
         'activemq-5.5.0', 
-        'activemq-5.6-SNAPSHOT', 
-        'rabbitmq-2.4.1'
+        'activemq-5.6-SNAPSHOT',
+        'hornetq-2.2.5.Final'
       ];
 
       var platform = '';
@@ -282,15 +282,15 @@
         <div>
           Show data for the JMS 1.1 server run on:
           <select id="platform">
-            <option value="mbp-2-core" selected="selected">Mac Book Pro 2 Core</option>
-            <option value="osx-8-core">OS X, Dual 4 Core CPUs</option>
+            <option value="mbp-2-core">Mac Book Pro 2 Core</option>
+            <option value="osx-8-core" selected="selected">OS X, Dual 4 Core CPUs</option>
             <!-- <option value="ubuntu-intel-2600k" >Ubuntu Single 4 Core 2600K CPU</option>
             <option value="win7-intel-2600k">Windows 7 Single 4 Core 2600K CPU</option>
             <option value="ubuntu-4-core">Ubuntu 4 Core CPUs</option> -->
           </select>
         </div>
         <script>
-          platform = 'mbp-2-core';
+          platform = 'osx-8-core';
           $("select#platform").change(function () {
             $("select#platform option").each(function () {
                $("#"+$(this).attr("value")).hide();
