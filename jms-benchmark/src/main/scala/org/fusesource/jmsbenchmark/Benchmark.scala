@@ -180,6 +180,7 @@ class Benchmark extends Action {
     getClass.getClassLoader.loadClass(provider.toLowerCase match {
       case "activemq" => "org.fusesource.jmsbenchmark.ActiveMQScenario"
       case "stomp" => "org.fusesource.jmsbenchmark.StompScenario"
+      case x => x
     }).newInstance().asInstanceOf[JMSClientScenario]
   }
 
