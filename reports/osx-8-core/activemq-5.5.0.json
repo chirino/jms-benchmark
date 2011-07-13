@@ -1,6 +1,6 @@
 {
   "benchmark_settings": {
-    "broker_name": "activemq-5.5.0-SNAPSHOT",
+    "broker_name": "Apache ActiveMQ 5.5.0",
     "url": "tcp://localhost:61616",
     "sample_count": 15,
     "sample_interval": 1000,

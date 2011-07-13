@@ -1,6 +1,6 @@
 {
   "benchmark_settings": {
-    "broker_name": "hornetq-2.2.5.Final",
+    "broker_name": "JBoss HornetQ 2.2.5.Final",
     "url": "tcp://localhost:5445",
     "sample_count": 15,
     "sample_interval": 1000,

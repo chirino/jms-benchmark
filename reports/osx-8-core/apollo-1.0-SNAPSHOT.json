@@ -1,6 +1,6 @@
 {
   "benchmark_settings": {
-    "broker_name": "apollo-1.0-SNAPSHOT",
+    "broker_name": "Apache Apollo 1.0-SNAPSHOT",
     "url": "tcp://localhost:61613",
     "sample_count": 15,
     "sample_interval": 1000,
