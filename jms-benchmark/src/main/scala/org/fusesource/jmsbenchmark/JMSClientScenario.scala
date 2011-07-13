@@ -19,7 +19,6 @@ package org.fusesource.jmsbenchmark
 
 import java.lang.Thread
 import javax.jms._
-import org.apache.activemq.command.{ActiveMQTopic, ActiveMQQueue}
 
 /**
  * <p>
