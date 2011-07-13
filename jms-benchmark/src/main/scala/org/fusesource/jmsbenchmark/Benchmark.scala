@@ -19,13 +19,12 @@ package org.fusesource.jmsbenchmark
 
 import scala.collection.mutable.HashMap
 
-import org.osgi.service.command.CommandSession
 import java.io.{PrintStream, FileOutputStream, File}
 import org.apache.felix.gogo.commands.basic.DefaultActionPreparator
 import collection.JavaConversions
 import java.lang.{String, Class}
 import org.apache.felix.gogo.commands.{CommandException, Action, Option => option, Argument => argument, Command => command}
-import javax.management.remote.rmi._RMIConnection_Stub
+import org.apache.felix.service.command.CommandSession
 
 object Benchmark {
   def main(args: Array[String]):Unit = {
