@@ -25,3 +25,18 @@ class StompScenario extends JMSClientScenario {
   }
 
 }
+
+object StompScenario {
+  def main(args:Array[String]):Unit = {
+    val scenario = new StompScenario
+    scenario.url = "tcp://localhost:61613"
+    scenario.display_errors = true
+    scenario.user_name = "admin"
+    scenario.password = "password"
+    scenario.message_size = 20
+    scenario.destination_type = "topic"
+    scenario.producers = 1
+    scenario.consumers = 1
+    scenario.run()
+  }
+}

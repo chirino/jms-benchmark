@@ -55,7 +55,7 @@
     <dependency>
       <groupId>org.fusesource.stompjms</groupId>
       <artifactId>stompjms-client</artifactId>
-      <version>1.1-SNAPSHOT</version>
+      <version>1.2-SNAPSHOT</version>
     </dependency>
     
     <dependency>
@@ -74,7 +74,7 @@
         <version>1.2</version>
         <configuration>
           <mainClass>org.fusesource.jmsbenchmark.Benchmark</mainClass>
-          <commandlineArgs>--provider stomp --url ${url} --user-name ${user-name} --password ${password} ${benchmark-options} ${basedir}/../reports/${box}/${server}.json</commandlineArgs>
+          <commandlineArgs>--provider stomp --display-errors --url ${url} --user-name ${user-name} --password ${password} ${benchmark-options} ${basedir}/../reports/${box}/${server}.json</commandlineArgs>
         </configuration>      
       </plugin>
     </plugins>
