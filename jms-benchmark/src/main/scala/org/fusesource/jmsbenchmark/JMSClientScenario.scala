@@ -85,11 +85,13 @@ abstract class JMSClientScenario extends Scenario {
 
           } catch {
             case e:Throwable =>
-              if( display_errors ) {
-                e.printStackTrace
+              if( !done.get ) {
+                if( display_errors ) {
+                  e.printStackTrace
+                }
+                error_counter.incrementAndGet
+                reconnect_delay = 1000
               }
-              error_counter.incrementAndGet
-              reconnect_delay = 1000
           } finally {
             dispose
           }
