@@ -31,7 +31,7 @@ to install, setup, and start the server.
 2. Run the benchmark with the admin credentials.  Example:
 
     cd jms-benchmark-stomp
-    mvn exec:java -Dbox=boxname -Dserver=apollo-1.0-beta2
+    mvn exec:java -Dbox=mbp-2-core -Dserver=apollo-1.0-SNAPSHOT
 
 ### Running against ActiveMQ 5.6-SNAPSHOT
 
