@@ -146,7 +146,7 @@ class Benchmark extends Action {
     println("===================================================================")
 
     run_benchmarks
-
+    out.getParentFile.mkdirs
     val os = new PrintStream(new FileOutputStream(out))
     os.println("{")
     os.println("""  "benchmark_settings": {""")
