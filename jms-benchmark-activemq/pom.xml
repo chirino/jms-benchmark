@@ -53,11 +53,6 @@
       <version>5.5.0</version>
     </dependency>
     <dependency>
-      <groupId>org.fusesource.stompjms</groupId>
-      <artifactId>stompjms-client</artifactId>
-      <version>1.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
       <version>${slf4j-version}</version>
