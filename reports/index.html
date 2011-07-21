@@ -195,7 +195,7 @@
         var i = 0;
         for(product in products) {
           var file = platform+"/"+products[product]+".json";
-          $.ajax({ url: file, async:false, success: function(data) {
+          $.ajax({ url: file, dataType: "json", async:false, success: function(data) {
             if( typeof data == 'string' ) {
               broker_samples[i] = $.parseJSON( data );
             } else {
@@ -284,8 +284,8 @@
           <select id="platform">
             <option value="mbp-2-core">Mac Book Pro 2 Core</option>
             <option value="osx-8-core" selected="selected">OS X, Dual 4 Core CPUs</option>
-            <!-- <option value="ubuntu-intel-2600k" >Ubuntu Single 4 Core 2600K CPU</option>
             <option value="win7-intel-2600k">Windows 7 Single 4 Core 2600K CPU</option>
+            <!-- <option value="ubuntu-intel-2600k" >Ubuntu Single 4 Core 2600K CPU</option>
             <option value="ubuntu-4-core">Ubuntu 4 Core CPUs</option> -->
           </select>
         </div>
@@ -323,8 +323,9 @@
             </ul>
             The two machines were connected via 1 GigE.
           </div>
+          -->
           <div id="win7-intel-2600k" style="display:none">
-            The JMS 1.1 server was run on a:
+            The benchmark load generator and  JMS 1.1 server was run on a machine with:
             <ul>
               <li>CPU: 3.4 GHz Intel 2600K</li>
               <li>Memory: 8 GB 2000 MHz DDR3</li>
@@ -332,17 +333,7 @@
               <li>Disk: SATA 6 Gb/s SSD (355MB read/140MB write)</li>
               <li>Java: 64-Bit 1.6.0_24-b07</li>
             </ul>
-            The JMS clients were run on:
-            <ul>
-              <li>Mac Pro Model: MacPro3,1</li>
-              <li>CPU: 2 x 3 GHz Quad-Core Intel Xeon</li>
-              <li>Memory: 8 GB 800 MHz DDR2</li>
-              <li>OS: Mac OS X 10.6.6</li>
-              <li>Disk: SATA 7200 RPM</li>
-              <li>Java: 64-Bit 1.6.0_22</li>
-            </ul>
-            The two machines were connected via 1 GigE.
-          </div>       -->    
+          </div>     
           <div id="mbp-2-core" style="display:none">
             The benchmark load generator and JMS 1.1 server was run on a machine with:
             <ul>
