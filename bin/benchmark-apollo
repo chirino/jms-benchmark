@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# This shell script automates running the jms-benchmark [1] against the
+# Apache Apollo project [2].
+#
+# [1]: http://github.com/chirino/stomp-benchmark
+# [2]: http://activemq.apache.org/apollo
+#
+
+true \
+${APOLLO_VERSION:=1.0-beta6} \
+${APOLLO_DOWNLOAD:="http://archive.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
+
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+. ${BASEDIR}/bin/benchmark-setup
+
+#
+# Install the apollo distro
+#
+APOLLO_HOME="${WORKSPACE}/apache-apollo-${APOLLO_VERSION}"
+if [ ! -d "${APOLLO_HOME}" ]; then
+  cd ${WORKSPACE}
+  wget "$APOLLO_DOWNLOAD"
+  tar -zxvf apache-apollo-*.tar.gz
+  rm -rf apache-apollo-*.tar.gz
+fi
+
+APOLLO_BASE="${WORKSPACE}/apollo-${APOLLO_VERSION}"
+if [ ! -d "${APOLLO_BASE}" ]; then
+  cd "${WORKSPACE}"
+  "${APOLLO_HOME}/bin/apollo" create "apollo-${APOLLO_VERSION}"
+fi
+
+#
+# Cleanup preious executions.
+killall -9 java erl epmd apollo > /dev/null 2>&1
+rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
+
+#
+# Configuration
+export JVM_FLAGS="-server -Xmx4G -Xms1G"
+
+#
+# Start the server
+CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
+"${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
+APOLLO_PID=$!
+echo "Started Apollo with PID: ${APOLLO_PID}"
+sleep 5
+cat "${CONSOLE_LOG}"
+
+#
+# Run the benchmark
+#
+cd "${BASEDIR}/jms-benchmark-stomp"
+export CLASSPATH=`mvn dependency:build-classpath | grep -v "\["`
+export CLASSPATH="${CLASSPATH}:target/classes"
+benchmark --provider stomp --display-errors --url tcp://localhost:61613 --user-name admin --password password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-stomp.json"
+echo ${BENCHMARK_COMMAND}
+${BENCHMARK_COMMAND}
+
+#
+# Kill the server
+kill -9 ${APOLLO_PID}
+  
+# Create a report.
+"${BASEDIR}/bin/benchmark-report" $*

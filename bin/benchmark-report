@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# This shell script creates the html index file which displays
+# results of the benchmarks.
+#
+if [ -z "${SKIP_REPORT}" ] ; then
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+. ${BASEDIR}/bin/benchmark-setup
+
+# Get a list of the log and json files.
+cd "${REPORTS_HOME}"
+LOG_FILES=`ls *.log 2> /dev/null` 
+JSON_FILES=`ls *.json | sed 's|.json|",|' | sed 's|^|"|'`
+JSON_FILES=`echo $JSON_FILES | sed 's|,$||'` #trim the trailing comma
+cd - > /dev/null
+
+LOGS_HTML=""
+if [ ! -z "${LOG_FILES}" ] ; then
+  LOGS_HTML="
+  <h2>Console logs of the benchmarked servers</h2>
+  <ul>"
+  for f in ${LOG_FILES} ; do
+    LOGS_HTML="${LOGS_HTML}
+  <li><a href="$f">$f</a></li>"
+  done
+  LOGS_HTML="${LOGS_HTML}
+  </ul>"
+fi
+
+mkdir -p "${REPORTS_HOME}/resources"
+cat "${BASEDIR}/src/main/html/template.html" | sed "s|PRODUCT_LIST|$JSON_FILES|" | perl -pi -e "s|LOGS_HTML|$LOGS_HTML|" > "${REPORTS_HOME}/index.html"
+cp "${BASEDIR}/src/main/html/resources/"* "${REPORTS_HOME}/resources"
+
+#
+# Only create it if it does not exist as it may get 
+# customized by hand later.
+if [ ! -f "${REPORTS_HOME}/server-info.html" ] ; then
+  
+  cat > "${REPORTS_HOME}/server-info.html" <<EOF
+  <!-- Feel free to manually edit this file, subsequent benchmark runs will not update it. -->
+  <h2>Machine Details</h2>
+  <pre>$(uname -a)</pre>
+EOF
+
+  DATA=`lsb_release -sd 2>&1`
+  if [ $? -eq 0 ] ; then
+    echo "<pre>${DATA}</pre>" >> "${REPORTS_HOME}/server-info.html" 
+  fi
+
+  DATA=`free -m 2>&1`
+  if [ $? -eq 0 ] ; then
+    echo "<pre>${DATA}</pre>" >> "${REPORTS_HOME}/server-info.html" 
+  fi
+
+  DATA=`cat /proc/cpuinfo 2>&1`
+  if [ $? -eq 0 ] ; then
+    echo "<pre>${DATA}</pre>" >> "${REPORTS_HOME}/server-info.html" 
+  fi
+
+  DATA=`java -version 2>&1`
+  if [ $? -eq 0 ] ; then
+    echo "<pre>${DATA}</pre>" >> "${REPORTS_HOME}/server-info.html" 
+  fi
+
+  which erl > /dev/null
+  if [ $? -eq 0 ] ; then
+    DATA=`erl -version 2>&1`
+  else
+    DATA=`${WORKSPACE}/erlang/bin/erl -version 2>&1`
+  fi
+  if [ $? -eq 0 ] ; then
+    echo "<pre>" >> "${REPORTS_HOME}/server-info.html" 
+    echo "${DATA}" >> "${REPORTS_HOME}/server-info.html" 
+    echo "</pre>" >> "${REPORTS_HOME}/server-info.html" 
+  fi
+
+fi
+
+echo "=========================================================================="
+echo "Results stored under: ${REPORTS_HOME}"
+echo "=========================================================================="
+
+fi

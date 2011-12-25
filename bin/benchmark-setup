@@ -1,0 +1,41 @@
+#!/bin/bash
+
+true \
+${REPORTS_HOME:=$1} \
+${REPORTS_HOME:=`pwd`/reports/`hostname`}
+WORKSPACE="${BASEDIR}/workspace"
+
+function benchmark {
+  echo CLASSPATH=${CLASSPATH}
+  echo java -server -Xmx2G org.fusesource.jmsbenchmark.Benchmark $*
+  java -server -Xmx2G org.fusesource.jmsbenchmark.Benchmark $*
+}
+
+mkdir -p ${WORKSPACE}
+mkdir -p ${REPORTS_HOME}
+cd "${REPORTS_HOME}" ; REPORTS_HOME=`pwd` ; cd - > /dev/null
+
+true \
+${MAVEN_VERSION:=3.0.3} \
+${MAVEN_DOWNLOAD:="http://archive.apache.org/dist/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"}
+
+export MAVEN_HOME="${WORKSPACE}/apache-maven-${MAVEN_VERSION}"
+export MVN="${MAVEN_HOME}/bin/mvn"
+
+#
+# Install Maven
+#
+if [ ! -f "${MVN}" ] ; then
+  cd ${WORKSPACE}
+  wget "${MAVEN_DOWNLOAD}"
+  tar -zxvf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+  rm -rf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+fi
+
+#
+# Build the jms-benchmark-hornetq if needed.
+#
+if [ ! -d "${BASEDIR}/jms-benchmark-hornetq/target/classes" ] ; then 
+  cd "${BASEDIR}"
+  mvn clean install
+fi

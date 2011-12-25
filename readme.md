@@ -1,51 +1,42 @@
 # JMS Benchmark
 
-A benchmarking tool for [JMS](http://en.wikipedia.org/wiki/Java_Message_Service) servers.
+A benchmarking tool for [JMS 1.1](http://en.wikipedia.org/wiki/Java_Message_Service) servers.
+The benchmark covers a wide variety of common usage scenarios.
 
-## Build Prep
+## Servers Currently Benchmarked
 
-* Install maven
-  
-* run: mvn install
+* Apache ActiveMQ
+* Apache ActiveMQ Apollo
+* RabbitMQ
+<!-- * HornetQ -->
 
-## Updating the Report
+## Running the Benchmark
 
-The `reports/report.html` file can load and display the results of multiple benchmark runs.
-You can updated which benchmark results are displayed by the report.html by editing
-it and updating to the line which defines the `products` variable (around line 34).
+Just run:
 
-      var products = [
-        'apollo-1.0-SNAPSHOT', 
-        'activemq-5.4.2'
-      ];
-
-### Running against Apollo 1.0-beta2
-
-[Apache Apollo](http://activemq.apache.org/apollo) is a new Stomp based 
-message server from good folks at the [Apache ActiveMQ](http://activemq.apache.org/) 
-project.
-
-1. Follow the [getting started guide](http://activemq.apache.org/apollo/versions/1.0-beta1/website/documentation/getting-started.html) 
-to install, setup, and start the server.
-
-2. Run the benchmark with the admin credentials.  Example:
-
-    cd jms-benchmark-stomp
-    mvn exec:java -Dbox=mbp-2-core -Dserver=apollo-1.0-SNAPSHOT
-
-### Running against ActiveMQ 5.6-SNAPSHOT
-
-[Apache ActiveMQ](http://activemq.apache.org) is the most popular open source JMS provider.
-
-1. Once installed, start the server by running:
-
-    cd ${ACTIVEMQ_HOME}
-    export ACTIVEMQ_OPTS_MEMORY="-Xmx2g -XX:+UseLargePages"
-    ./bin/activemq console xbean:conf/activemq-specjms.xml
-
-2. Run the benchmark:
-
-    cd jms-benchmark-activemq
-    mvn exec:java -Dbox=boxname -Dserver=activemq-5.6-SNAPSHOT
+    ./bin/benchmark-all
     
+or one of the server specific benchmark scripts like:
 
+    ./bin/benchmark-activemq
+
+Tested to work on:
+
+* Ubuntu 11.10
+* Amazon Linux
+* OS X
+
+The benchmark report will be stored in the `reports/$(hostname)` directory.
+
+## Running the Benchmark on an EC2 Amazon Linux 64 bit AMI
+
+If you want to run the benchmark on EC2, we recommend using at least the
+c1.xlarge instance type.  Once you have the instance started just execute
+the following commands on the instance:
+
+    sudo yum install -y screen
+    curl https://nodeload.github.com/chirino/jms-benchmark/tarball/master | tar -zxv 
+    mv chirino-jms-benchmark-* jms-benchmark
+    screen ./jms-benchmark/bin/benchmark-all
+
+The results will be stored in the ~/reports directory.
