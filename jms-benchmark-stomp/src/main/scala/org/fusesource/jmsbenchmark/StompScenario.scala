@@ -1,7 +1,7 @@
 package org.fusesource.jmsbenchmark
 
 import javax.jms.{Destination, ConnectionFactory}
-import org.fusesource.stompjms.{StompJmsTopic, StompJmsQueue, StompJmsConnectionFactory}
+import org.fusesource.stomp.jms.{StompJmsTopic, StompJmsQueue, StompJmsConnectionFactory}
 
 /**
  * <p>
@@ -19,8 +19,8 @@ class StompScenario extends JMSClientScenario {
   }
 
   override protected def destination(i:Int):Destination = destination_type match {
-    case "queue" => new StompJmsQueue(indexed_destination_name(i))
-    case "topic" => new StompJmsTopic(indexed_destination_name(i))
+    case "queue" => new StompJmsQueue("/queue/", indexed_destination_name(i))
+    case "topic" => new StompJmsTopic("/topic/", indexed_destination_name(i))
     case _ => error("Unsuported destination type: "+destination_type)
   }
 
