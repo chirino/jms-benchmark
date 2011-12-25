@@ -37,5 +37,5 @@ fi
 #
 if [ ! -d "${BASEDIR}/jms-benchmark-hornetq/target/classes" ] ; then 
   cd "${BASEDIR}"
-  mvn clean install
+  ${MVN} clean install
 fi

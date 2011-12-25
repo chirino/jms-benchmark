@@ -53,7 +53,7 @@ cat "${CONSOLE_LOG}"
 # Run the benchmark
 #
 cd "${BASEDIR}/jms-benchmark-stomp"
-export CLASSPATH=`mvn dependency:build-classpath | grep -v "\["`
+export CLASSPATH=`${MVN} dependency:build-classpath | grep -v "\["`
 export CLASSPATH="${CLASSPATH}:target/classes"
 benchmark --provider stomp --display-errors --url tcp://localhost:61613 --user-name admin --password password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-stomp.json"
 echo ${BENCHMARK_COMMAND}

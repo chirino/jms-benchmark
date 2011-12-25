@@ -15,7 +15,7 @@ echo ==================================================================
 exit 0
 
 true \
-${RABBITMQ_VERSION:=2.7.0} \
+${RABBITMQ_VERSION:=2.7.1} \
 ${RABBITMQ_DOWNLOAD:="http://www.rabbitmq.com/releases/rabbitmq-server/v${RABBITMQ_VERSION}/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
@@ -91,7 +91,7 @@ cat "${CONSOLE_LOG}"
 # Run the benchmark
 #
 cd "${BASEDIR}/jms-benchmark-stomp"
-export CLASSPATH=`mvn dependency:build-classpath | grep -v "\["`
+export CLASSPATH=`${MVN} dependency:build-classpath | grep -v "\["`
 export CLASSPATH="${CLASSPATH}:target/classes"
 benchmark --provider stomp --display-errors --url tcp://localhost:61613 --login guest --passcode guest "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}.json"
 
