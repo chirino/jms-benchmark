@@ -74,7 +74,7 @@ cat "${CONSOLE_LOG}"
 # Run the benchmark
 #
 cd "${BASEDIR}/jms-benchmark-hornetq"
-export CLASSPATH=`mvn dependency:build-classpath | grep -v "\["`
+export CLASSPATH=`mvn dependency:build-classpath "-Dhornetq-version=${HORNETQ_VERSION}" | grep -v "\["`
 export CLASSPATH="${CLASSPATH}:target/classes"
 benchmark --provider org.fusesource.jmsbenchmark.HornetQScenario --display-errors --url tcp://localhost:5445 "${REPORTS_HOME}/hornetq-${HORNETQ_VERSION}-core.json"
 echo ${BENCHMARK_COMMAND}

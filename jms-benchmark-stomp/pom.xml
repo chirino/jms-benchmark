@@ -38,6 +38,7 @@
     <benchmark-options></benchmark-options>
     <box>boxname</box>
     <server>server</server>
+    <stompjms-version>1.6</stompjms-version>
   </properties>
 
   <dependencies>
@@ -48,14 +49,9 @@
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.activemq</groupId>
-      <artifactId>activemq-core</artifactId>
-      <version>5.5.0</version>
-    </dependency>
-    <dependency>
       <groupId>org.fusesource.stompjms</groupId>
       <artifactId>stompjms-client</artifactId>
-      <version>1.2</version>
+      <version>${stompjms-version}</version>
     </dependency>
     
     <dependency>
