@@ -1,0 +1,188 @@
+INFO: Using default configuration
+(you can configure options in one of these file: /etc/default/activemq /home/ec2-user/.activemqrc)
+
+INFO: Invoke the following command to create a configuration file
+/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1/bin/activemq setup [ /etc/default/activemq | /home/ec2-user/.activemqrc ]
+
+INFO: Using java '/usr/lib/jvm/jre/bin/java'
+INFO: Starting in foreground, this is just for debugging purposes (stop process by pressing CTRL+C)
+Java Runtime: Sun Microsystems Inc. 1.6.0_20 /usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre
+  Heap sizes: current=1004928k  free=994439k  max=3728320k
+    JVM args: -Xmx4G -Xms1G -Dorg.apache.activemq.UseDedicatedTaskRunner=true -Djava.util.logging.config.file=logging.properties -Dcom.sun.management.jmxremote -Dactivemq.classpath=/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1/conf; -Dactivemq.home=/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1 -Dactivemq.base=/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1
+ACTIVEMQ_HOME: /home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1
+ACTIVEMQ_BASE: /home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1
+Loading message broker from: xbean:file:/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1/conf/activemq.xml
+ INFO | Refreshing org.apache.activemq.xbean.XBeanBrokerFactory$1@62da3a1e: startup date [Sun Dec 25 18:09:46 UTC 2011]; root of context hierarchy
+ WARN | destroyApplicationContextOnStop parameter is deprecated, please use shutdown hooks instead
+ INFO | PListStore:/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1/data/localhost/tmp_storage started
+ INFO | Using Persistence Adapter: KahaDBPersistenceAdapter[/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1/data/kahadb]
+ INFO | ActiveMQ 5.5.1 JMS Message Broker (localhost) is starting
+ INFO | For help or more information please see: http://activemq.apache.org/
+ INFO | Listening for connections at: tcp://ip-10-3-103-211:61616
+ INFO | Connector openwire Started
+ INFO | ActiveMQ JMS Message Broker (localhost, ID:ip-10-3-103-211-55452-1324836588553-0:1) started
+ INFO | jetty-7.1.6.v20100715
+ INFO | ActiveMQ WebConsole initialized.
+ INFO | Initializing Spring FrameworkServlet 'dispatcher'
+ INFO | ActiveMQ Console at http://0.0.0.0:8161/admin
+ INFO | ActiveMQ Web Demos at http://0.0.0.0:8161/demo
+ INFO | RESTful file access application at http://0.0.0.0:8161/fileserver
+ INFO | Started SelectChannelConnector@0.0.0.0:8161
+ INFO | PListStore:/home/ec2-user/jms-benchmark/workspace/apache-activemq-5.5.1/data/localhost/tmp_storage initialized
+ERROR | Caught an IO Exception getting the DiskList 35_loadq-7
+java.io.EOFException
+	at java.io.DataInputStream.readFully(DataInputStream.java:197)
+	at java.io.DataInputStream.readUTF(DataInputStream.java:609)
+	at java.io.DataInputStream.readUTF(DataInputStream.java:564)
+	at org.apache.kahadb.util.StringMarshaller.readPayload(StringMarshaller.java:51)
+	at org.apache.kahadb.util.StringMarshaller.readPayload(StringMarshaller.java:28)
+	at org.apache.kahadb.index.BTreeNode$Marshaller.readPayload(BTreeNode.java:190)
+	at org.apache.kahadb.index.BTreeNode$Marshaller.readPayload(BTreeNode.java:147)
+	at org.apache.kahadb.page.Transaction.load(Transaction.java:406)
+	at org.apache.kahadb.page.Transaction.load(Transaction.java:361)
+	at org.apache.kahadb.index.BTreeIndex.loadNode(BTreeIndex.java:262)
+	at org.apache.kahadb.index.BTreeIndex.getRoot(BTreeIndex.java:174)
+	at org.apache.kahadb.index.BTreeIndex.put(BTreeIndex.java:189)
+	at org.apache.activemq.store.kahadb.plist.PListStore$1.execute(PListStore.java:212)
+	at org.apache.kahadb.page.Transaction.execute(Transaction.java:728)
+	at org.apache.activemq.store.kahadb.plist.PListStore.getPList(PListStore.java:208)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.getDiskList(FilePendingMessageCursor.java:442)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.flushToDisk(FilePendingMessageCursor.java:423)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.tryAddMessageLast(FilePendingMessageCursor.java:214)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.addMessageLast(FilePendingMessageCursor.java:190)
+	at org.apache.activemq.broker.region.cursors.StoreQueueCursor.addMessageLast(StoreQueueCursor.java:96)
+	at org.apache.activemq.broker.region.Queue.sendMessage(Queue.java:1617)
+	at org.apache.activemq.broker.region.Queue.doMessageSend(Queue.java:721)
+	at org.apache.activemq.broker.region.Queue.send(Queue.java:653)
+	at org.apache.activemq.broker.region.AbstractRegion.send(AbstractRegion.java:365)
+	at org.apache.activemq.broker.region.RegionBroker.send(RegionBroker.java:523)
+	at org.apache.activemq.broker.BrokerFilter.send(BrokerFilter.java:129)
+	at org.apache.activemq.broker.CompositeDestinationBroker.send(CompositeDestinationBroker.java:96)
+	at org.apache.activemq.broker.TransactionBroker.send(TransactionBroker.java:227)
+	at org.apache.activemq.broker.MutableBrokerFilter.send(MutableBrokerFilter.java:135)
+	at org.apache.activemq.broker.TransportConnection.processMessage(TransportConnection.java:458)
+	at org.apache.activemq.command.ActiveMQMessage.visit(ActiveMQMessage.java:681)
+	at org.apache.activemq.broker.TransportConnection.service(TransportConnection.java:306)
+	at org.apache.activemq.broker.TransportConnection$1.onCommand(TransportConnection.java:179)
+	at org.apache.activemq.transport.TransportFilter.onCommand(TransportFilter.java:69)
+	at org.apache.activemq.transport.WireFormatNegotiator.onCommand(WireFormatNegotiator.java:113)
+	at org.apache.activemq.transport.InactivityMonitor.onCommand(InactivityMonitor.java:227)
+	at org.apache.activemq.transport.TransportSupport.doConsume(TransportSupport.java:83)
+	at org.apache.activemq.transport.tcp.TcpTransport.doRun(TcpTransport.java:220)
+	at org.apache.activemq.transport.tcp.TcpTransport.run(TcpTransport.java:202)
+	at java.lang.Thread.run(Thread.java:636)
+ERROR | Caught an Exception adding a message: ActiveMQTextMessage {commandId = 706, responseRequired = false, messageId = ID:ip-10-3-103-211-55960-1324836595362-0:26:1:1:702, originalDestination = null, originalTransactionId = null, producerId = ID:ip-10-3-103-211-55960-1324836595362-0:26:1:1, destination = queue://loadq-7, transactionId = null, expiration = 0, timestamp = 1324836663899, arrival = 0, brokerInTime = 1324836664483, brokerOutTime = 0, correlationId = null, replyTo = null, persistent = false, type = null, priority = 4, groupID = null, groupSequence = 0, targetConsumerId = null, compressed = false, userID = null, content = null, marshalledProperties = null, dataStructure = null, redeliveryCounter = 0, size = 0, properties = null, readOnlyProperties = false, readOnlyBody = false, droppable = false, text = Message from produce} first to FilePendingMessageCursor 
+java.lang.RuntimeException: java.io.EOFException
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.getDiskList(FilePendingMessageCursor.java:445)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.flushToDisk(FilePendingMessageCursor.java:423)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.tryAddMessageLast(FilePendingMessageCursor.java:214)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.addMessageLast(FilePendingMessageCursor.java:190)
+	at org.apache.activemq.broker.region.cursors.StoreQueueCursor.addMessageLast(StoreQueueCursor.java:96)
+	at org.apache.activemq.broker.region.Queue.sendMessage(Queue.java:1617)
+	at org.apache.activemq.broker.region.Queue.doMessageSend(Queue.java:721)
+	at org.apache.activemq.broker.region.Queue.send(Queue.java:653)
+	at org.apache.activemq.broker.region.AbstractRegion.send(AbstractRegion.java:365)
+	at org.apache.activemq.broker.region.RegionBroker.send(RegionBroker.java:523)
+	at org.apache.activemq.broker.BrokerFilter.send(BrokerFilter.java:129)
+	at org.apache.activemq.broker.CompositeDestinationBroker.send(CompositeDestinationBroker.java:96)
+	at org.apache.activemq.broker.TransactionBroker.send(TransactionBroker.java:227)
+	at org.apache.activemq.broker.MutableBrokerFilter.send(MutableBrokerFilter.java:135)
+	at org.apache.activemq.broker.TransportConnection.processMessage(TransportConnection.java:458)
+	at org.apache.activemq.command.ActiveMQMessage.visit(ActiveMQMessage.java:681)
+	at org.apache.activemq.broker.TransportConnection.service(TransportConnection.java:306)
+	at org.apache.activemq.broker.TransportConnection$1.onCommand(TransportConnection.java:179)
+	at org.apache.activemq.transport.TransportFilter.onCommand(TransportFilter.java:69)
+	at org.apache.activemq.transport.WireFormatNegotiator.onCommand(WireFormatNegotiator.java:113)
+	at org.apache.activemq.transport.InactivityMonitor.onCommand(InactivityMonitor.java:227)
+	at org.apache.activemq.transport.TransportSupport.doConsume(TransportSupport.java:83)
+	at org.apache.activemq.transport.tcp.TcpTransport.doRun(TcpTransport.java:220)
+	at org.apache.activemq.transport.tcp.TcpTransport.run(TcpTransport.java:202)
+	at java.lang.Thread.run(Thread.java:636)
+Caused by: java.io.EOFException
+	at java.io.DataInputStream.readFully(DataInputStream.java:197)
+	at java.io.DataInputStream.readUTF(DataInputStream.java:609)
+	at java.io.DataInputStream.readUTF(DataInputStream.java:564)
+	at org.apache.kahadb.util.StringMarshaller.readPayload(StringMarshaller.java:51)
+	at org.apache.kahadb.util.StringMarshaller.readPayload(StringMarshaller.java:28)
+	at org.apache.kahadb.index.BTreeNode$Marshaller.readPayload(BTreeNode.java:190)
+	at org.apache.kahadb.index.BTreeNode$Marshaller.readPayload(BTreeNode.java:147)
+	at org.apache.kahadb.page.Transaction.load(Transaction.java:406)
+	at org.apache.kahadb.page.Transaction.load(Transaction.java:361)
+	at org.apache.kahadb.index.BTreeIndex.loadNode(BTreeIndex.java:262)
+	at org.apache.kahadb.index.BTreeIndex.getRoot(BTreeIndex.java:174)
+	at org.apache.kahadb.index.BTreeIndex.put(BTreeIndex.java:189)
+	at org.apache.activemq.store.kahadb.plist.PListStore$1.execute(PListStore.java:212)
+	at org.apache.kahadb.page.Transaction.execute(Transaction.java:728)
+	at org.apache.activemq.store.kahadb.plist.PListStore.getPList(PListStore.java:208)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.getDiskList(FilePendingMessageCursor.java:442)
+	... 24 more
+ WARN | Async error occurred: java.lang.RuntimeException: java.lang.RuntimeException: java.io.EOFException
+java.lang.RuntimeException: java.lang.RuntimeException: java.io.EOFException
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.tryAddMessageLast(FilePendingMessageCursor.java:227)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.addMessageLast(FilePendingMessageCursor.java:190)
+	at org.apache.activemq.broker.region.cursors.StoreQueueCursor.addMessageLast(StoreQueueCursor.java:96)
+	at org.apache.activemq.broker.region.Queue.sendMessage(Queue.java:1617)
+	at org.apache.activemq.broker.region.Queue.doMessageSend(Queue.java:721)
+	at org.apache.activemq.broker.region.Queue.send(Queue.java:653)
+	at org.apache.activemq.broker.region.AbstractRegion.send(AbstractRegion.java:365)
+	at org.apache.activemq.broker.region.RegionBroker.send(RegionBroker.java:523)
+	at org.apache.activemq.broker.BrokerFilter.send(BrokerFilter.java:129)
+	at org.apache.activemq.broker.CompositeDestinationBroker.send(CompositeDestinationBroker.java:96)
+	at org.apache.activemq.broker.TransactionBroker.send(TransactionBroker.java:227)
+	at org.apache.activemq.broker.MutableBrokerFilter.send(MutableBrokerFilter.java:135)
+	at org.apache.activemq.broker.TransportConnection.processMessage(TransportConnection.java:458)
+	at org.apache.activemq.command.ActiveMQMessage.visit(ActiveMQMessage.java:681)
+	at org.apache.activemq.broker.TransportConnection.service(TransportConnection.java:306)
+	at org.apache.activemq.broker.TransportConnection$1.onCommand(TransportConnection.java:179)
+	at org.apache.activemq.transport.TransportFilter.onCommand(TransportFilter.java:69)
+	at org.apache.activemq.transport.WireFormatNegotiator.onCommand(WireFormatNegotiator.java:113)
+	at org.apache.activemq.transport.InactivityMonitor.onCommand(InactivityMonitor.java:227)
+	at org.apache.activemq.transport.TransportSupport.doConsume(TransportSupport.java:83)
+	at org.apache.activemq.transport.tcp.TcpTransport.doRun(TcpTransport.java:220)
+	at org.apache.activemq.transport.tcp.TcpTransport.run(TcpTransport.java:202)
+	at java.lang.Thread.run(Thread.java:636)
+Caused by: java.lang.RuntimeException: java.io.EOFException
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.getDiskList(FilePendingMessageCursor.java:445)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.flushToDisk(FilePendingMessageCursor.java:423)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.tryAddMessageLast(FilePendingMessageCursor.java:214)
+	... 22 more
+Caused by: java.io.EOFException
+	at java.io.DataInputStream.readFully(DataInputStream.java:197)
+	at java.io.DataInputStream.readUTF(DataInputStream.java:609)
+	at java.io.DataInputStream.readUTF(DataInputStream.java:564)
+	at org.apache.kahadb.util.StringMarshaller.readPayload(StringMarshaller.java:51)
+	at org.apache.kahadb.util.StringMarshaller.readPayload(StringMarshaller.java:28)
+	at org.apache.kahadb.index.BTreeNode$Marshaller.readPayload(BTreeNode.java:190)
+	at org.apache.kahadb.index.BTreeNode$Marshaller.readPayload(BTreeNode.java:147)
+	at org.apache.kahadb.page.Transaction.load(Transaction.java:406)
+	at org.apache.kahadb.page.Transaction.load(Transaction.java:361)
+	at org.apache.kahadb.index.BTreeIndex.loadNode(BTreeIndex.java:262)
+	at org.apache.kahadb.index.BTreeIndex.getRoot(BTreeIndex.java:174)
+	at org.apache.kahadb.index.BTreeIndex.put(BTreeIndex.java:189)
+	at org.apache.activemq.store.kahadb.plist.PListStore$1.execute(PListStore.java:212)
+	at org.apache.kahadb.page.Transaction.execute(Transaction.java:728)
+	at org.apache.activemq.store.kahadb.plist.PListStore.getPList(PListStore.java:208)
+	at org.apache.activemq.broker.region.cursors.FilePendingMessageCursor.getDiskList(FilePendingMessageCursor.java:442)
+	... 24 more
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-0. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-1. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-2. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-4. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-3. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-7. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-9. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-5. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-8. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Usage Manager memory limit (1048576) reached for topic://loadt-6. Producers will be throttled to the rate at which messages are removed from this destination to prevent flooding it. See http://activemq.apache.org/producer-flow-control.html for more info
+ INFO | Transport failed: java.net.SocketException: Connection reset
+ INFO | Transport failed: java.net.SocketException: Connection reset
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:610:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:606:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:608:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:608:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:608:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:610:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:609:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:622:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Usage Manager memory limit reached. Stopping producer (ID:ip-10-3-103-211-55960-1324836595362-0:617:1:1) to prevent flooding topic://loadt-0. See http://activemq.apache.org/producer-flow-control.html for more info (blocking for: 1s)
+ INFO | Transport failed: java.net.SocketException: Connection reset
