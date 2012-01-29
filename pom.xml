@@ -102,6 +102,7 @@
     <module>jms-benchmark-stomp</module>
     <module>jms-benchmark-activemq</module>
     <module>jms-benchmark-hornetq</module>
+    <module>jms-benchmark-qpid</module>
   </modules>
 
 </project>
