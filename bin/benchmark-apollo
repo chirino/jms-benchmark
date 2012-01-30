@@ -8,7 +8,7 @@
 #
 
 true \
-${APOLLO_VERSION:=1.0-beta6} \
+${APOLLO_VERSION:=1.0} \
 ${ACTIVEMQ_VERSION:=5.5.1} \
 ${APOLLO_DOWNLOAD:="https://repository.apache.org/content/repositories/orgapacheactivemq-162/org/apache/activemq/apache-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
 # ${APOLLO_DOWNLOAD:="http://archive.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
