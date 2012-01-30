@@ -85,7 +85,7 @@ cat "${CONSOLE_LOG}"
 cd "${BASEDIR}/jms-benchmark-activemq"
 export CLASSPATH=`${MVN} -P download dependency:build-classpath "-Dactivemq-version=${ACTIVEMQ_VERSION}" | grep -v "\["`
 export CLASSPATH="${CLASSPATH}:target/classes"
-benchmark --provider activemq --display-errors --url tcp://localhost:61613 "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-openwire.json"
+benchmark --provider activemq --display-errors --url tcp://localhost:61613 --user-name admin --password password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-openwire.json"
 
 #
 # Kill the server
