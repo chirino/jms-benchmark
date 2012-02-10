@@ -5,10 +5,20 @@ The benchmark covers a wide variety of common usage scenarios.
 
 ## Servers Currently Benchmarked
 
-* Apache ActiveMQ
-* Apache ActiveMQ Apollo
+* Apache ActiveMQ (Openwire protocol)
+* Apache ActiveMQ Apollo (STOMP and Openwire protocols)
+* HornetQ (Core protocol)
+
+<!-- 
 * RabbitMQ
-<!-- * HornetQ -->
+-->
+
+# Just looking for the Results?
+
+The numbers look different depending on the Hardware and OS they are run on:
+
+* [Amazon Linux: EC2 High-CPU Extra Large Instance](http://hiramchirino.com/jms-benchmark/ec2-c1.xlarge/index.html)
+* [Ubuntu 11.10: Quad-Core 2600k Intel CPU (3.4 GHz)](http://hiramchirino.com/jms-benchmark/ubuntu-2600k/index.html)
 
 ## Running the Benchmark
 
