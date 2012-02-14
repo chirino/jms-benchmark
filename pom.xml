@@ -37,7 +37,7 @@
   <properties>
 
     <!-- dependency versions -->
-    <scala-version>2.8.1</scala-version>
+    <scala-version>2.9.1</scala-version>
     <maven-scala-plugin-version>2.15.0</maven-scala-plugin-version>
     <karaf-version>2.2.0</karaf-version>
     <slf4j-version>1.5.11</slf4j-version>
@@ -60,6 +60,12 @@
       <version>${karaf-version}</version>
     </dependency>
 
+    <!-- to make mvn scala:console work nicely -->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>jline</artifactId>
+      <version>${scala-version}</version>
+    </dependency> 
   </dependencies>
   
   <build>
