@@ -45,8 +45,9 @@ c1.xlarge instance type.  Once you have the instance started just execute
 the following commands on the instance:
 
     sudo yum install -y screen
-    curl https://nodeload.github.com/chirino/jms-benchmark/tarball/master | tar -zxv 
-    mv chirino-jms-benchmark-* jms-benchmark
-    screen ./jms-benchmark/bin/benchmark-all
+    curl https://nodeload.github.com/chirino/jms-benchmark/zip/master > jms-benchmark.zip
+    jar -xvf jms-benchmark.zip 
+    chmod a+x ./jms-benchmark-master/bin/*
+    screen ./jms-benchmark-master/bin/benchmark-all
 
 The results will be stored in the ~/reports directory.
