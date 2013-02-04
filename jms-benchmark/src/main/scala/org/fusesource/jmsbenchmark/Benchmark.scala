@@ -42,7 +42,8 @@ object Benchmark {
     val action = new Benchmark()
     val p = new DefaultActionPreparator
     try {
-      if( p.prepare(action, session, JavaConversions.asJavaList(args.toList)) ) {
+      import collection.JavaConversions._
+      if( p.prepare(action, session, args.toList) ) {
         action.execute(session)
       }
     } catch {
@@ -397,7 +398,7 @@ class Benchmark extends Action {
             slow.destination_type = dt
             slow.consumer_sleep = 100 // He can only process 10 /sec
             slow.consumers = 1
-          case _ => error("Bad case")
+          case _ => sys.error("Bad case")
         }
       }
     }
@@ -426,7 +427,7 @@ class Benchmark extends Action {
             blue.destination_type = dt
             blue.selector = "color='blue'"
             blue.consumers = 1
-          case _ => error("Bad case")
+          case _ => sys.error("Bad case")
         }
       }
     }

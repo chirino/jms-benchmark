@@ -28,7 +28,7 @@
     <relativePath>..</relativePath>
   </parent>
   
-  <artifactId>jms-benchmark-qpid</artifactId>
+  <artifactId>jms-benchmark-qpid-1.0</artifactId>
   <name>${project.artifactId}</name>
 
   <properties>
@@ -50,7 +50,7 @@
 
     <dependency>
       <groupId>org.apache.qpid</groupId>
-      <artifactId>qpid-client</artifactId>
+      <artifactId>qpid-amqp-1-0-client-jms</artifactId>
       <version>${qpid-version}</version>
     </dependency>
     <dependency>
@@ -74,7 +74,7 @@
         <version>1.2</version>
         <configuration>
           <mainClass>org.fusesource.jmsbenchmark.Benchmark</mainClass>
-          <commandlineArgs>--provider org.fusesource.jmsbenchmark.QpidScenario --display-errors --url ${url} --user-name ${user-name} --password ${password} ${benchmark-options} ${basedir}/../reports/${box}/qpid.json</commandlineArgs>
+          <commandlineArgs>--provider org.fusesource.jmsbenchmark.Qpid10Scenario --display-errors --url ${url} --user-name ${user-name} --password ${password} ${benchmark-options} ${basedir}/../reports/${box}/qpid.json</commandlineArgs>
         </configuration>      
       </plugin>
     </plugins>

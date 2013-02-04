@@ -18,19 +18,21 @@
 package org.fusesource.jmsbenchmark
 
 import javax.jms.{Destination, ConnectionFactory}
-import org.apache.qpid.client._
-import org.apache.qpid.jms.ConnectionURL
+import org.apache.qpid.amqp_1_0.jms.impl.{TopicImpl, ConnectionFactoryImpl, QueueImpl}
+import java.net.URI
 
-object QpidScenario {
+object Qpid10Scenario {
   def main(args:Array[String]):Unit = {
-    val scenario = new QpidScenario
-    scenario.url = "tcp://localhost:5672"
-    scenario.user_name = "guest"
-    scenario.password = "guest"
+    val scenario = new Qpid10Scenario
+    scenario.url = "tcp://localhost:61613"
+    scenario.user_name = "admin"
+    scenario.password = "password"
     scenario.display_errors = true
     scenario.message_size = 20
     scenario.destination_type = "queue"
     scenario.consumers = 1
+    scenario.queue_prefix = "queue://"
+    scenario.topic_prefix = "topic://"
     scenario.run()
   }
 }
@@ -42,24 +44,27 @@ object QpidScenario {
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-class QpidScenario extends JMSClientScenario {
+class Qpid10Scenario extends JMSClientScenario {
 
   override protected def factory:ConnectionFactory = {
     val client_id = user_name
     val virtual_host = ""
-    val x = new AMQConnectionURL(url)
-    x.setUsername(user_name)
-    x.setPassword(password)
-    x.setClientName(client_id)
-    x.setVirtualHost(virtual_host)
-    new AMQConnectionFactory(x)
+    val u = new URI(url)
+    var host = u.getHost
+    var port = u.getPort
+    if ( port == -1 ) {
+      port = 5672
+    }
+    var ssl = false
+    if ( u.getScheme == "amqps" ) {
+      ssl = true
+    }
+    new ConnectionFactoryImpl(u.getHost, u.getPort, user_name, password, client_id, virtual_host, ssl)
   }
 
   override protected def destination(i:Int):Destination = destination_type match {
-    case "queue" =>
-      new AMQQueue("BURL:direct://amq.direct//qload-"+i)
-    case "topic" =>
-      new AMQTopic("BURL:topic://amq.topic/tload"+i+"/sub")
+    case "queue" => new QueueImpl(indexed_destination_name(i))
+    case "topic" => new TopicImpl(indexed_destination_name(i))
     case _ =>
       error("Unsuported destination type: "+destination_type)
   }
