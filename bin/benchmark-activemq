@@ -8,7 +8,7 @@
 #
 
 true \
-${ACTIVEMQ_VERSION:=5.5.1} \
+${ACTIVEMQ_VERSION:=5.8.0} \
 ${ACTIVEMQ_DOWNLOAD:="http://archive.apache.org/dist/activemq/apache-activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"}
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
@@ -19,7 +19,7 @@ BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 ACTIVEMQ_HOME="${WORKSPACE}/apache-activemq-${ACTIVEMQ_VERSION}"
 if [ ! -d "${ACTIVEMQ_HOME}" ]; then
   cd "${WORKSPACE}"
-  wget "$ACTIVEMQ_DOWNLOAD"
+  wget "$ACTIVEMQ_DOWNLOAD" -O apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
   tar -zxvf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
   rm -rf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
 fi

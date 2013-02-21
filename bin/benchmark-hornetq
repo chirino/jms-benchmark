@@ -8,7 +8,7 @@
 #
 
 true \
-${HORNETQ_VERSION:=2.2.5.Final} \
+${HORNETQ_VERSION:=2.3.0.CR1} \
 ${HORNETQ_DOWNLOAD:="http://downloads.jboss.org/hornetq/hornetq-${HORNETQ_VERSION}.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
@@ -20,7 +20,7 @@ BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 HORNETQ_HOME="${WORKSPACE}/hornetq-${HORNETQ_VERSION}"
 if [ ! -d "${HORNETQ_HOME}" ]; then
   cd ${WORKSPACE}
-  wget "$HORNETQ_DOWNLOAD"
+  wget "$HORNETQ_DOWNLOAD" -O hornetq-${HORNETQ_VERSION}.tar.gz
   tar -zxvf hornetq-${HORNETQ_VERSION}.tar.gz
   rm -rf hornetq-${HORNETQ_VERSION}.tar.gz
   
