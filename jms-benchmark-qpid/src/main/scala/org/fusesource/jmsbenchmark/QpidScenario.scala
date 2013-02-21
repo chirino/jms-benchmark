@@ -61,7 +61,7 @@ class QpidScenario extends JMSClientScenario {
     case "topic" =>
       new AMQTopic("BURL:topic://amq.topic/tload"+i+"/sub")
     case _ =>
-      error("Unsuported destination type: "+destination_type)
+      sys.error("Unsuported destination type: "+destination_type)
   }
 
 }

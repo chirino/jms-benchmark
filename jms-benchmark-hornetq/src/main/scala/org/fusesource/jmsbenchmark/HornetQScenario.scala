@@ -30,7 +30,7 @@ class HornetQScenario extends JMSClientScenario {
   override protected def destination(i:Int):Destination = destination_type match {
     case "queue" => HornetQJMSClient.createQueue(indexed_destination_name(i))
     case "topic" => HornetQJMSClient.createTopic(indexed_destination_name(i))
-    case _ => error("Unsuported destination type: "+destination_type)
+    case _ => sys.error("Unsuported destination type: "+destination_type)
   }
 
 }

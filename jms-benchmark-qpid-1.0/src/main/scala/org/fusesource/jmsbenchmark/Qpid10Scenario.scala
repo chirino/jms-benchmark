@@ -66,7 +66,7 @@ class Qpid10Scenario extends JMSClientScenario {
     case "queue" => new QueueImpl(indexed_destination_name(i))
     case "topic" => new TopicImpl(indexed_destination_name(i))
     case _ =>
-      error("Unsuported destination type: "+destination_type)
+      sys.error("Unsuported destination type: "+destination_type)
   }
 
 }
