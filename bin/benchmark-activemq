@@ -53,7 +53,7 @@ fi
 # Run the benchmark
 #
 cd "${BASEDIR}/jms-benchmark-activemq"
-export CLASSPATH=`${MVN} -P download dependency:build-classpath "-Dactivemq-version=${ACTIVEMQ_VERSION}" | grep -v "\["`
+export CLASSPATH=`${MVN} -P download org.apache.maven.plugins:maven-dependency-plugin:2.7:build-classpath "-Dactivemq-version=${ACTIVEMQ_VERSION}" | grep -v "\[" | grep -v Download`
 export CLASSPATH="${CLASSPATH}:target/classes"
 benchmark --provider activemq --display-errors --url tcp://${SERVER_ADDRESS}:61616 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}-openwire.json"
 

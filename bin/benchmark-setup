@@ -16,7 +16,7 @@ mkdir -p ${REPORTS_HOME}
 cd "${REPORTS_HOME}" ; REPORTS_HOME=`pwd` ; cd - > /dev/null
 
 true \
-${MAVEN_VERSION:=3.0.3} \
+${MAVEN_VERSION:=3.0.4} \
 ${MAVEN_DOWNLOAD:="http://archive.apache.org/dist/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"}
 
 export MAVEN_HOME="${WORKSPACE}/apache-maven-${MAVEN_VERSION}"

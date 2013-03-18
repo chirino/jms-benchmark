@@ -38,7 +38,7 @@
     <benchmark-options></benchmark-options>
     <box>boxname</box>
     <server>server</server>
-    <activemq-version>5.5.1</activemq-version>
+    <activemq-version>5.8.0</activemq-version>
   </properties>
 
   <dependencies>
@@ -50,7 +50,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.activemq</groupId>
-      <artifactId>activemq-core</artifactId>
+      <artifactId>activemq-all</artifactId>
       <version>${activemq-version}</version>
     </dependency>
     <dependency>
