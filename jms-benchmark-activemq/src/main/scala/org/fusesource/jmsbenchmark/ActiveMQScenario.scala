@@ -1,6 +1,6 @@
 package org.fusesource.jmsbenchmark
 
-import org.apache.activemq.spring.ActiveMQConnectionFactory
+import org.apache.activemq.ActiveMQConnectionFactory
 import javax.jms.{Destination, ConnectionFactory}
 import org.apache.activemq.command.{ActiveMQTopic, ActiveMQQueue}
 

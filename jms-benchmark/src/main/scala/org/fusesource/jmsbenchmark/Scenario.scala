@@ -21,19 +21,7 @@ import java.util.concurrent.atomic._
 import java.util.concurrent.TimeUnit._
 import scala.collection.mutable.ListBuffer
 
-//object Example {
-//  def main(args:Array[String]):Unit = {
-////    val scenario = new ActiveMQScenario
-////    scenario.url = "tcp://localhost:61616"
-//    val scenario = new StompScenario
-//    scenario.url = "tcp://localhost:61613"
-//    scenario.display_errors = true
-//    scenario.user_name = "admin"
-//    scenario.message_size = 1024*256
-//    scenario.password = "password"
-//  }
-//}
-
+case class DataSample(time:Long, produced:Long, consumed:Long, errors:Long, max_latency:Long)
 
 object Scenario {
   val MESSAGE_ID:Array[Byte] = "message-id"
@@ -55,15 +43,15 @@ trait Scenario {
   var user_name:String = _
   var password:String = _
 
-  private var _producer_sleep: { def apply(): Int; def init(time: Long) } = new { def apply() = 0; def init(time: Long) {}  }
-  def producer_sleep = _producer_sleep()
-  def producer_sleep_= (new_value: Int) = _producer_sleep = new { def apply() = new_value; def init(time: Long) {}  }
-  def producer_sleep_= (new_func: { def apply(): Int; def init(time: Long) }) = _producer_sleep = new_func
+  private var _producer_sleep: { def apply(client:Scenario#Client): Int; def init(time: Long) } = new { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
+  def producer_sleep(client:Client) = _producer_sleep(client:Scenario#Client)
+  def producer_sleep_= (new_value: Int) = _producer_sleep = new { def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
+  def producer_sleep_= (new_func: { def apply(client:Scenario#Client): Int; def init(time: Long) }) = _producer_sleep = new_func
 
-  private var _consumer_sleep: { def apply(): Int; def init(time: Long) } = new { def apply() = 0; def init(time: Long) {}  }
-  def consumer_sleep = _consumer_sleep()
-  def consumer_sleep_= (new_value: Int) = _consumer_sleep = new { def apply() = new_value; def init(time: Long) {}  }
-  def consumer_sleep_= (new_func: { def apply(): Int; def init(time: Long) }) = _consumer_sleep = new_func
+  private var _consumer_sleep: { def apply(client:Scenario#Client): Int; def init(time: Long) } = new { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
+  def consumer_sleep(client:Scenario#Client) = _consumer_sleep(client)
+  def consumer_sleep_= (new_value: Int) = _consumer_sleep = new { def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
+  def consumer_sleep_= (new_func: { def apply(client:Scenario#Client): Int; def init(time: Long) }) = _consumer_sleep = new_func
 
   var producers = 1
   var producers_per_sample = 0
@@ -82,6 +70,7 @@ trait Scenario {
   var ack_mode = "auto"
   var messages_per_connection = -1L
   var display_errors = false
+  var tx_size = 0
 
   var destination_type = "queue"
   private var _destination_name: () => String = () => "load"
@@ -93,6 +82,7 @@ trait Scenario {
   val producer_counter = new AtomicLong()
   val consumer_counter = new AtomicLong()
   val error_counter = new AtomicLong()
+  val max_latency = new AtomicLong()
   val done = new AtomicBoolean()
 
   var queue_prefix = ""
@@ -130,24 +120,32 @@ trait Scenario {
               Thread.sleep(sample_interval)
               val end = System.nanoTime
               collection_sample
-              val samples = collection_end
-              samples.get("p_custom").foreach { case (_, count)::Nil =>
+              val collected = collection_end
+
+              if ( producers > 0 ) {
+                val count = collected.last.produced
                 total_producer_count += count
-                print_rate("Producer", count, total_producer_count, end - start)
-              case _ =>
+                if ( total_producer_count > 0 ) {
+                  print_rate("Producer", count, total_producer_count, end - start)
+                }
               }
-              samples.get("c_custom").foreach { case (_, count)::Nil =>
+
+              if ( consumers > 0 ) {
+                val count = collected.last.consumed
                 total_consumer_count += count
-                print_rate("Consumer", count, total_consumer_count, end - start)
-              case _ =>
+                if ( total_consumer_count > 0 ) {
+                  print_rate("Consumer", count, total_consumer_count, end - start)
+                }
               }
-              samples.get("e_custom").foreach { case (_, count)::Nil =>
-                if( count!= 0 ) {
-                  total_error_count += count
+
+              val count = collected.last.errors
+              total_error_count += count
+              if ( total_error_count > 0 ) {
+                if ( count != 0 ) {
                   print_rate("Error", count, total_error_count, end - start)
                 }
-              case _ =>
               }
+
               start = end
             }
           } catch {
@@ -181,12 +179,12 @@ trait Scenario {
     "  producers             = "+producers+"\n"+
     "  message_size          = "+message_size+"\n"+
     "  persistent            = "+persistent+"\n"+
-    "  producer_sleep (ms)   = "+producer_sleep+"\n"+
+    "  producer_sleep (ms)   = "+producer_sleep(null)+"\n"+
     "  headers               = "+headers.mkString(", ")+"\n"+
     "  \n"+
     "  --- Consumer Properties ---\n"+
     "  consumers             = "+consumers+"\n"+
-    "  consumer_sleep (ms)   = "+consumer_sleep+"\n"+
+    "  consumer_sleep (ms)   = "+consumer_sleep(null)+"\n"+
     "  selector              = "+selector+"\n"+
     "  durable               = "+durable+"\n"+
     ""
@@ -201,43 +199,29 @@ trait Scenario {
     }
   }
 
-  var producer_samples:Option[ListBuffer[(Long,Long)]] = None
-  var consumer_samples:Option[ListBuffer[(Long,Long)]] = None
-  var error_samples = ListBuffer[(Long,Long)]()
+  var data_samples = ListBuffer[DataSample]()
 
   def collection_start: Unit = {
     producer_counter.set(0)
     consumer_counter.set(0)
     error_counter.set(0)
+    max_latency.set(0)
+    data_samples = ListBuffer[DataSample]()
+  }
 
-    producer_samples = if (producers > 0 || producers_per_sample>0 ) {
-      Some(ListBuffer[(Long,Long)]())
-    } else {
-      None
-    }
-    consumer_samples = if (consumers > 0 || consumers_per_sample>0 ) {
-      Some(ListBuffer[(Long,Long)]())
-    } else {
-      None
+  def update_max_latency(value:Long) = {
+    var was = max_latency.get
+    while ( value > was && !max_latency.compareAndSet(was, value) ) {
+      // someone else changed it before we could update it, lets
+      // get the update and see if we still need to update.
+      was = max_latency.get
     }
   }
 
-  def collection_end: Map[String, scala.List[(Long,Long)]] = {
-    var rc = Map[String, List[(Long,Long)]]()
-    producer_samples.foreach{ samples =>
-      rc += "p_"+name -> samples.toList
-      samples.clear
-    }
-    consumer_samples.foreach{ samples =>
-      rc += "c_"+name -> samples.toList
-      samples.clear
-    }
-    rc += "e_"+name -> error_samples.toList
-    error_samples.clear
-    rc
-  }
+  def collection_end = data_samples.toList
 
   trait Client {
+    def id:Int
     def start():Unit
     def shutdown():Unit
   }
@@ -318,9 +302,14 @@ trait Scenario {
   def collection_sample: Unit = {
 
     val now = System.currentTimeMillis()
-    producer_samples.foreach(_.append((now, producer_counter.getAndSet(0))))
-    consumer_samples.foreach(_.append((now, consumer_counter.getAndSet(0))))
-    error_samples.append((now, error_counter.getAndSet(0)))
+    val data = DataSample(
+      time=now,
+      produced=producer_counter.getAndSet(0),
+      consumed=consumer_counter.getAndSet(0),
+      errors=error_counter.getAndSet(0),
+      max_latency=max_latency.getAndSet(0)
+    )
+    data_samples += data
 
     // we might need to increment number the producers..
     for (i <- 0 until producers_per_sample) {

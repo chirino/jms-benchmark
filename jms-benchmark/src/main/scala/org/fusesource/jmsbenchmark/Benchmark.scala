@@ -81,60 +81,21 @@ class Benchmark extends Action {
   @argument(index=0, name = "out", description = "The file to store benchmark metrics in", required=true)
   var out:File = _
 
-  @option(name = "--enable-topics", description = "enable benchmarking the topic scenarios")
-  var enable_topics = true
-  @option(name = "--enable-queues", description = "enable benchmarking the queue scenarios")
-  var enable_queues = true
-  @option(name = "--enable-persistent", description = "enable benchmarking the persistent scenarios")
-  var enable_persistence = true
-
-  @option(name = "--scenario-connection-scale", description = "enable the connection scale scenarios")
-  var scenario_connection_scale = false
-
-  @option(name = "--scenario-connection-scale-rate", description = "How many connection to add after each sample")
-  var scenario_connection_scale_rate = 50
-  @option(name = "--scenario-connection-max-samples", description = "The maximum number of sample to take in the connection scale scenario")
-  var scenario_connection_scale_max_samples = 100
-
-  @option(name = "--scenario-producer-throughput", description = "enable the producer throughput scenarios")
-  var scenario_producer_throughput = true
-  @option(name = "--scenario-queue-loading", description = "enable the queue load/unload scenarios")
-  var scenario_queue_loading = true
-  @option(name = "--scenario-partitioned", description = "enable the partitioned load scenarios")
-  var scenario_partitioned = true
-  @option(name = "--scenario-fan-in-out", description = "enable the fan in/fan out scenarios")
-  var scenario_fan_in_out = true
-  @option(name = "--scenario-durable-subs", description = "enable the durable subscription scenarios")
-  var scenario_durable_subs = false
-  @option(name = "--scenario-selector", description = "enable the selector based scenarios")
-  var scenario_selector = false
-  @option(name = "--scenario-slow-consumer", description = "enable the slow consumer scenarios")
-  var scenario_slow_consumer = false
-
-  @option(name = "--queue-prefix", description = "prefix used for queue destiantion names.")
+  @option(name = "--queue-prefix", description = "prefix used for queue names.")
   var queue_prefix = ""
-  @option(name = "--topic-prefix", description = "prefix used for topic destiantion names.")
+  @option(name = "--topic-prefix", description = "prefix used for topic names.")
   var topic_prefix = ""
 
   @option(name = "--drain-timeout", description = "How long to wait for a drain to timeout in ms.")
   var drain_timeout = 3000L
 
-  @option(name = "--messages-per-connection", description = "The number of messages that are sent before the client reconnect.")
-  var messages_per_connection = -1L
-
   @option(name = "--display-errors", description = "Should errors get dumped to the screen when they occur?")
   var display_errors = false
 
-  var samples = HashMap[String, List[(Long,Long)]]()
+  var samples = HashMap[String, List[DataSample]]()
 
-
-
-  def json_format(value:Option[List[String]]):String = {
-    value.map { json_format _ }.getOrElse("null")
-  }
-
-  def json_format(value:List[String]):String = {
-    "[ "+value.mkString(",")+" ]"
+  def json_format[T](value:List[T]):String = {
+    "[ "+value.mkString(", ")+" ]"
   }
 
   def execute(session: CommandSession): AnyRef = {
@@ -147,7 +108,9 @@ class Benchmark extends Action {
     println("===================================================================")
 
     run_benchmarks
-    out.getParentFile.mkdirs
+    if( out.getParentFile!=null ) {
+      out.getParentFile.mkdirs
+    }
     val os = new PrintStream(new FileOutputStream(out))
     os.println("{")
     os.println("""  "benchmark_settings": {""")
@@ -156,11 +119,17 @@ class Benchmark extends Action {
     os.println("""    "sample_count": %d,""".format(sample_count))
     os.println("""    "sample_interval": %d,""".format(sample_interval))
     os.println("""    "warm_up_count": %d,""".format(warm_up_count))
-    os.println("""    "scenario_connection_scale_rate": %d""".format(scenario_connection_scale_rate))
     os.println("""  },""")
-    os.println(samples.map { case (name, sample)=>
-      """  "%s": %s""".format(name, json_format(sample.map(x=> "[%d,%d]".format(x._1,x._2))))
-    }.mkString(",\n"))
+
+    for ( (name, sample) <- samples ) {
+      os.println("""  "%s": {""".format(name))
+      os.println("""    "timestamp": %s,""".format(json_format(sample.map(_.time))))
+      os.println("""    "producer tp": %s,""".format(json_format(sample.map(_.produced))))
+      os.println("""    "consumer tp": %s,""".format(json_format(sample.map(_.consumed))))
+      os.println("""    "max latency": %s,""".format(json_format(sample.map(_.max_latency))))
+      os.println("""    "errors": %s""".format(json_format(sample.map(_.errors))))
+      os.println("""  },""")
+    }
     os.println("}")
 
     os.close
@@ -254,12 +223,17 @@ class Benchmark extends Action {
       println(".")
       scenarios.foreach{ scenario=>
         val collected = scenario.collection_end
-        collected.foreach{ x=>
-          if( !x._1.startsWith("e_") || x._2.find( _._2 != 0 ).isDefined ) {
-            println("%s samples: %s".format(x._1, json_format(x._2.map(_._2.toString))) )
-          }
+        if( collected.find( _.produced != 0 ).isDefined ) {
+          println("producer throughput samples : %s".format(json_format(collected.map(_.produced) )) )
         }
-        samples ++= collected
+        if( collected.find( _.consumed != 0 ).isDefined ) {
+          println("consumer throughput samples : %s".format(json_format(collected.map(_.consumed) )) )
+          println("consumer max latency samples: %s".format(json_format(collected.map(x => "%.3f ms".format(x.max_latency / 1000000.0)) )) )
+        }
+        if( collected.find( _.errors != 0 ).isDefined ) {
+          println("errors                      : %s".format(json_format(collected.map(_.errors) )) )
+        }
+        samples.put(scenario.name, collected)
       }
     }
     Thread.currentThread.setPriority(Thread.NORM_PRIORITY)
@@ -306,204 +280,92 @@ class Benchmark extends Action {
     }
   }
 
-  private def mlabel(size:Int) = if((size%1024)==0) (size/1024)+"k" else size+"b"
-  private def plabel(persistent:Boolean) = if(persistent) "p" else ""
-  private def slabel(sync_send:Boolean) = if(sync_send) "" else "a"
-
   def run_benchmarks = {
 
+//    // Load up a queue for 30 seconds..
+//    benchmark("queue load", drain=false, sc=30) { g=>
+//      g.destination_type = "queue"
+//      g.persistent = true
+//      g.ack_mode = "auto"
+//      g.message_size = 20
+//      g.tx_size = 1000
+//      g.producers = 10
+//      g.consumers = 0
+//    }
+//
+//    // Unload the queue
+//    benchmark("queue unload", drain=true, sc=30) { g=>
+//      g.destination_type = "queue"
+//      g.persistent = true
+//      g.ack_mode = "auto"
+//      g.message_size = 20
+//      g.producers = 0
+//      g.consumers = 10
+//    }
 
-    val persistence_values = if (enable_persistence) {
-      List(false, true)
-    } else {
-      List(false)
-    }
+    for(
+      mode <- Array("topic", "queue") ;
+      persistent <- Array(true, false) ;
+      message_size <- Array(10, 100, 1000, 100000, 10000000) ;
+      tx_size <- Array(0, 100, 10, 1) ;
+      selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
+      destination_count <- Array(1, 10, 100) ; // Array(1, 10, 100, 1000, 10000) ;
+      consumers <- Array(1, 10, 100) ; // Array(1, 10, 100, 1000, 10000) ;
+      producers <- Array(1, 10, 100) // Array(1, 10, 100, 1000, 10000)
+    ) {
 
-    var destination_types = List[String]()
-    if( enable_topics ) {
-      destination_types ::= "topic"
-    }
-    if( enable_queues ) {
-      destination_types ::= "queue"
-    }
+      val name =
+        "throughput: "+
+        ", mode: "+mode+
+        ", persistent: "+persistent+
+        ", message_size: "+message_size+
+        ", tx_size: "+tx_size+
+        ", selector_complexity: "+selector_complexity+
+        ", destination_count: "+destination_count+
+        ", consumers: "+consumers+
+        ", producers: "+producers
 
-    // Benchmark for the queue parallel load scenario
-    if( scenario_partitioned ) {
-
-      val message_sizes = List(20, 1024, 1024 * 256)
-      val destinations = List(1, 5, 10)
-
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; load <- destinations ) {
-        val name = "%s_%d%s%s_%d%s_%d".format(mlabel(size), load, plabel(persistent), slabel(persistent), load, destination_type, load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = load
-          g.persistent = persistent
-          g.destination_count = load
-          g.destination_type = destination_type
-          g.consumers = load
-        }
+      benchmark(name) { g=>
+        g.destination_type = mode
+        g.persistent = persistent
+        g.ack_mode = if ( persistent ) "client" else "auto"
+        g.message_size = message_size
+        g.tx_size = tx_size
+        g.destination_count = destination_count
+        g.consumers = consumers
+        g.producers = producers
       }
     }
 
-    if( scenario_fan_in_out  ) {
-      val client_count = List(1, 5, 10)
-      val message_sizes = List(20)
-      
-      for( persistent <- persistence_values; destination_type <- destination_types ; size <- message_sizes  ; consumers <- client_count; producers <- client_count ) {
-        if( !(consumers == 1 && producers == 1) ) {
-          val name = "%s_%d%s%s_1%s_%d".format(mlabel(size), producers, plabel(persistent), slabel(persistent), destination_type, consumers)
-          benchmark(name) { g=>
-            g.message_size = size
-            g.producers = producers
-            g.persistent = persistent
-            g.destination_count = 1
-            g.destination_type = destination_type
-            g.consumers = consumers
+    for(
+      mode <- Array("topic", "queue") ;
+      persistent <- Array(true, false)
+    ) {
+
+      val name =
+        "slow consumer: "+
+        ", mode: "+mode+
+        ", persistent: "+persistent
+
+      benchmark(name) { g=>
+        g.destination_type = mode
+        g.persistent = persistent
+        g.ack_mode = if ( persistent ) "client" else "auto"
+        g.message_size = 10
+        g.producers = 1
+        g.consumers = 10
+        g.consumer_sleep_=(new {
+          def apply(client:Scenario#Client) = {
+            // the client /w id 2 will be the slow one.
+            if ( client.id == 2 )  {
+              500
+            } else {
+              0
+            }
           }
-        }
+          def init(time: Long) {}
+        })
       }
     }
-
-    if( enable_topics && scenario_durable_subs) {
-      // Benchmark for durable subscriptions on topics
-      for( persistent <- persistence_values ; size <- List(1024)  ; load <- List(5, 20) ) {
-        val name = "%s_1%s%s_1topic_%dd".format(mlabel(size), plabel(persistent), slabel(persistent), load)
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = persistent
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = load
-          g.durable = true
-        }
-      }
-    }
-
-    // Setup a scenario /w fast and slow consumers
-    if(scenario_slow_consumer) {
-      for( dt <- destination_types) {
-        multi_benchmark(List("20b_1a_1%s_1fast".format(dt), "20b_0_1%s_1slow".format(dt))) {
-          case List(fast:Scenario, slow:Scenario) =>
-            fast.message_size = 20
-            fast.producers = 1
-            fast.persistent = false
-            fast.destination_count = 1
-            fast.destination_type = dt
-            fast.consumers = 1
-
-            slow.producers = 0
-            slow.destination_count = 1
-            slow.destination_type = dt
-            slow.consumer_sleep = 100 // He can only process 10 /sec
-            slow.consumers = 1
-          case _ => sys.error("Bad case")
-        }
-      }
-    }
-
-    // Setup selecting consumers on 1 destination.
-    if( scenario_selector ) {
-      for( dt <- destination_types) {
-        multi_benchmark(List("20b_color_2a_1%s_0".format(dt), "20b_0_1%s_1_red".format(dt), "20b_0_1%s_1_blue".format(dt))) {
-          case List(producer:Scenario, red:Scenario, blue:Scenario) =>
-            producer.message_size = 20
-            producer.producers = 2
-            producer.headers = Array(Array(("color", "red")), Array(("color", "blue")))
-            producer.persistent = false
-            producer.destination_count = 1
-            producer.destination_type = dt
-            producer.consumers = 0
-
-            red.producers = 0
-            red.destination_count = 1
-            red.destination_type = dt
-            red.selector = "color='red'"
-            red.consumers = 1
-
-            blue.producers = 0
-            blue.destination_count = 1
-            blue.destination_type = dt
-            blue.selector = "color='blue'"
-            blue.consumers = 1
-          case _ => sys.error("Bad case")
-        }
-      }
-    }
-
-    if( enable_topics && scenario_producer_throughput ) {
-      // Benchmark for figuring out the max producer throughput
-      for( size <- List(20, 1024, 1024 * 256) ) {
-        val name = "%s_1a_1topic_0".format(mlabel(size))
-        benchmark(name) { g=>
-          g.message_size = size
-          g.producers = 1
-          g.persistent = false
-          g.destination_count = 1
-          g.destination_type = "topic"
-          g.consumers = 0
-        }
-      }
-    }
-
-    if( enable_persistence && scenario_queue_loading ) {
-      for( persistent <- List(false, true)) {
-        val size = 20
-
-        // Benchmark queue loading
-        val name = "%s_1%s%s_1queue_0".format(mlabel(size), plabel(persistent), slabel(persistent))
-        benchmark(name, false, 30) { g=>
-          g.message_size = 20
-          g.producers = 1
-          g.persistent = persistent
-          g.destination_count = 1
-          g.destination_type = "queue"
-          g.consumers = 0
-          g.destination_name = "load_me_up"
-        }
-
-        // Benchmark unloading
-        if(persistent) {
-          val name = "%s_0_1queue_1".format(mlabel(size))
-          benchmark(name, true, 30) { g=>
-            g.producers = 0
-            g.destination_count = 1
-            g.destination_type = "queue"
-            g.consumers = 1
-            g.destination_name = "load_me_up"
-          }
-        }
-
-      }
-    }
-
-    if(scenario_connection_scale ) {
-
-      for( messages_per_connection <- List(-1)) {
-
-        /** this test keeps going until we start getting a large number of errors */
-        var remaining = scenario_connection_scale_max_samples
-        def is_done(scenarios:List[Scenario]):Boolean = {
-          remaining -= 1;
-          var errors = 0L
-          scenarios.foreach( _.error_samples.lastOption.foreach(x=> errors+=x._2))
-          return errors >= scenario_connection_scale_rate || remaining <= 0
-        }
-
-        benchmark("20b_Xa%s_1queue_1".format(messages_per_connection)+"m", true, 0, is_done) { scenario=>
-          scenario.message_size = 20
-          scenario.producers = 0
-          scenario.messages_per_connection = messages_per_connection
-          scenario.producers_per_sample = scenario_connection_scale_rate
-          scenario.producer_sleep = 1000
-          scenario.persistent = false
-          scenario.destination_count = 1
-          scenario.destination_type = "queue"
-          scenario.consumers = 1
-        }
-      }
-    }
-
   }
 }

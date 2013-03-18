@@ -130,39 +130,65 @@ abstract class JMSClientScenario extends Scenario {
     def name:String
   }
 
-  class ConsumerClient(val id: Int) extends JMSClient {
+  class ConsumerClient(override val id: Int) extends JMSClient {
     val name: String = "consumer " + id
 
     def execute {
-      var session = connection.createSession(false, jms_ack_mode)
-      var consumer:MessageConsumer = if( durable ) {
+      var session = if(tx_size==0) {
+        connection.createSession(false, jms_ack_mode)
+      } else {
+        connection.createSession(true, Session.SESSION_TRANSACTED)
+      }
+
+      var consumer = if( durable ) {
         session.createDurableSubscriber(destination(id).asInstanceOf[Topic], name, selector, no_local)
       } else {
         session.createConsumer(destination(id), selector, no_local)
       }
 
+      var tx_counter = 0
       while( !done.get() ) {
         val msg = consumer.receive(500)
         if( msg!=null ) {
+          val latency = System.nanoTime() - msg.getLongProperty("ts")
+          update_max_latency(latency)
           consumer_counter.incrementAndGet()
-          if (consumer_sleep != 0) {
-            Thread.sleep(consumer_sleep)
+
+          val sleep  = consumer_sleep(this)
+          if (sleep != 0) {
+            Thread.sleep(sleep)
           }
           if(session.getAcknowledgeMode == Session.CLIENT_ACKNOWLEDGE) {
             msg.acknowledge();
           }
+
+          if ( tx_size != 0 ) {
+            tx_counter += 1
+            if ( tx_counter == tx_size) {
+              session.commit()
+              tx_counter = 0
+            }
+          }
+
         }
+
       }
     }
 
   }
 
-  class ProducerClient(val id: Int) extends JMSClient {
+  class ProducerClient(override val id: Int) extends JMSClient {
 
     val name: String = "producer " + id
 
     def execute {
-      val session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+
+      var session = if(tx_size==0) {
+        connection.createSession(false, jms_ack_mode)
+      } else {
+        connection.createSession(true, Session.SESSION_TRANSACTED)
+      }
+
       val producer:MessageProducer = session.createProducer(destination(id))
       producer.setDeliveryMode(if( persistent ) {
         DeliveryMode.PERSISTENT
@@ -175,11 +201,23 @@ abstract class JMSClientScenario extends Scenario {
         msg.setStringProperty(key, value)
       }
 
+      var tx_counter = 0
       while( !done.get() ) {
+        msg.setLongProperty("ts", System.nanoTime());
         producer.send(msg)
         producer_counter.incrementAndGet()
-        if (producer_sleep != 0) {
-          Thread.sleep(producer_sleep)
+
+        val sleep = producer_sleep(this)
+        if (sleep != 0) {
+          Thread.sleep(sleep)
+        }
+
+        if ( tx_size != 0 ) {
+          tx_counter += 1
+          if ( tx_counter == tx_size) {
+            session.commit()
+            tx_counter = 0
+          }
         }
       }
 
