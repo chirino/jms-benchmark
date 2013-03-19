@@ -40,7 +40,7 @@ class ActiveMQScenario extends JMSClientScenario {
     val heap_usage = mbean_server.getAttribute(new ObjectName("java.lang:type=Memory"), "HeapMemoryUsage").asInstanceOf[CompositeData]
     val heap_max = heap_usage.get("max").asInstanceOf[java.lang.Long].longValue()
 
-    val prefetch_available_heap = (heap_max-(1024*1024*500))/2
+    val prefetch_available_heap = (heap_max-(1024*1024*500))/10
     val prefech_size = prefetch_available_heap/(consumers*message_size)
     if( prefech_size < 1000 ) {
       rc.getPrefetchPolicy.setAll(prefech_size.toInt)

@@ -306,12 +306,12 @@ class Benchmark extends Action {
     for(
       mode <- Array("topic", "queue") ;
       persistent <- Array(true, false) ;
-      message_size <- Array(/*10000000,*/ 100000, 1000, 100, 10, 100) ;
-      tx_size <- Array(100, 10, 1, 0) ;
       selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-      destination_count <- Array(100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
       consumers <- Array(100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
-      producers <- Array(100, 10, 1) // Array(1, 10, 100, 1000, 10000)
+      producers <- Array(100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
+      message_size <- Array(/*10000000,*/ 100000, 1000, 100, 10, 100) ;
+      tx_size <- Array(/*100,*/ 10, 1, 0) ;
+      destination_count <- Array(1, 10, 100)  // Array(1, 10, 100, 1000, 10000) ;
     ) {
 
       val name =
