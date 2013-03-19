@@ -102,11 +102,15 @@ abstract class JMSClientScenario extends Scenario {
     }
 
     def dispose {
-      try {
-        connection.close()
-      } catch {
-        case _ =>
-      }
+      new Thread() {
+        override def run() {
+          try {
+            connection.close()
+          } catch {
+            case _ =>
+          }
+        }
+      }.start()
     }
 
     def execute:Unit
@@ -119,7 +123,12 @@ abstract class JMSClientScenario extends Scenario {
       done.set(true)
       if ( worker!=null ) {
         dispose
-        worker.join(1000)
+      }
+    }
+
+    def wait_for_shutdown = {
+      if ( worker!=null ) {
+        worker.join(5000)
         while(worker.isAlive ) {
           println("Worker did not shutdown quickly.. interrupting thread.")
           worker.interrupt()
