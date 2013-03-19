@@ -267,15 +267,15 @@ trait Scenario {
       func
     } finally {
       done.set(true)
+      for( client <- producer_clients ) {
+        client.shutdown
+      }
+      producer_clients = List()
       // wait for the threads to finish..
       for( client <- consumer_clients ) {
         client.shutdown
       }
       consumer_clients = List()
-      for( client <- producer_clients ) {
-        client.shutdown
-      }
-      producer_clients = List()
     }
   }
 

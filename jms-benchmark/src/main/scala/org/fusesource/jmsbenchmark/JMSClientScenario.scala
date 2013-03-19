@@ -19,6 +19,7 @@ package org.fusesource.jmsbenchmark
 
 import java.lang.Thread
 import javax.jms._
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * <p>
@@ -62,6 +63,7 @@ abstract class JMSClientScenario extends Scenario {
     @volatile
     var connection:Connection = _
     var message_counter=0L
+    val done = new AtomicBoolean()
 
     var worker = new Thread() {
       override def run() {
@@ -114,7 +116,7 @@ abstract class JMSClientScenario extends Scenario {
     }
 
     def shutdown = {
-      assert(done.get)
+      done.set(true)
       if ( worker!=null ) {
         dispose
         worker.join(1000)
