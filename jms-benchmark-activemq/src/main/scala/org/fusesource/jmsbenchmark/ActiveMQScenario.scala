@@ -3,6 +3,9 @@ package org.fusesource.jmsbenchmark
 import org.apache.activemq.spring.ActiveMQConnectionFactory
 import javax.jms.{Destination, ConnectionFactory}
 import org.apache.activemq.command.{ActiveMQTopic, ActiveMQQueue}
+import management.ManagementFactory
+import javax.management.ObjectName
+import javax.management.openmbean.CompositeData
 
 object ActiveMQScenario {
   def main(args:Array[String]):Unit = {
@@ -13,7 +16,7 @@ object ActiveMQScenario {
     scenario.password = "password"
     scenario.message_size = 20
     scenario.producers = 1
-    scenario.consumers = 0
+    scenario.consumers = 100
     scenario.destination_type = "topic"
     scenario.run()
   }
@@ -31,6 +34,18 @@ class ActiveMQScenario extends JMSClientScenario {
   override protected def factory:ConnectionFactory = {
     val rc = new ActiveMQConnectionFactory
     rc.setBrokerURL(url)
+
+    // Lets optimize the prefetch used for the scenario.
+    val mbean_server = ManagementFactory.getPlatformMBeanServer()
+    val heap_usage = mbean_server.getAttribute(new ObjectName("java.lang:type=Memory"), "HeapMemoryUsage").asInstanceOf[CompositeData]
+    val heap_max = heap_usage.get("max").asInstanceOf[java.lang.Long].longValue()
+
+    val prefetch_available_heap = (heap_max-(1024*1024*500))/2
+    val prefech_size = prefetch_available_heap/(consumers*message_size)
+    if( prefech_size < 1000 ) {
+      rc.getPrefetchPolicy.setAll(prefech_size.toInt)
+    }
+
     rc
   }
 
