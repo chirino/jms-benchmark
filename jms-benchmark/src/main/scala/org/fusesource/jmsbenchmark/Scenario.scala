@@ -240,6 +240,7 @@ trait Scenario {
   trait Client {
     def start():Unit
     def shutdown():Unit
+    def wait_for_shutdown:Unit
   }
 
   var producer_clients = List[Client]()
@@ -270,10 +271,16 @@ trait Scenario {
       for( client <- producer_clients ) {
         client.shutdown
       }
+      for( client <- producer_clients ) {
+        client.wait_for_shutdown
+      }
       producer_clients = List()
       // wait for the threads to finish..
       for( client <- consumer_clients ) {
         client.shutdown
+      }
+      for( client <- consumer_clients ) {
+        client.wait_for_shutdown
       }
       consumer_clients = List()
     }
@@ -308,6 +315,9 @@ trait Scenario {
         done.set(true)
         for( client <- consumer_clients ) {
           client.shutdown
+        }
+        for( client <- consumer_clients ) {
+          client.wait_for_shutdown
         }
         println(". (drained %d)".format(drained))
       }
