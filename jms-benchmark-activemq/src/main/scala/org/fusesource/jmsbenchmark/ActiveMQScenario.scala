@@ -34,6 +34,7 @@ class ActiveMQScenario extends JMSClientScenario {
   override protected def factory:ConnectionFactory = {
     val rc = new ActiveMQConnectionFactory
     rc.setBrokerURL(url)
+    rc.setCloseTimeout(3*1000)
 
     // Lets optimize the prefetch used for the scenario.
     val mbean_server = ManagementFactory.getPlatformMBeanServer()
