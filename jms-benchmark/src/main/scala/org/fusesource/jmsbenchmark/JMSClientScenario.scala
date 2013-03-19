@@ -181,6 +181,12 @@ abstract class JMSClientScenario extends Scenario {
             }
           }
 
+        } else {
+          // commit early once we don't get anymore messages.
+          if ( tx_size != 0 && tx_counter > 0 ) {
+            session.commit()
+            tx_counter = 0
+          }
         }
 
       }
