@@ -179,6 +179,7 @@ class Benchmark extends Action {
       }
     }
 
+    println()
     print("scenario  : %s ".format(names.mkString(" and ")))
 
     def with_load[T](s:List[Scenario])(proc: => T):T = {
@@ -304,36 +305,57 @@ class Benchmark extends Action {
 //    }
 
     for(
-      mode <- Array("topic", "queue") ;
+      mode <- Array("queue", "topic") ;
       persistent <- Array(true, false) ;
       selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-      consumers <- Array(100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
-      producers <- Array(100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
-      message_size <- Array(/*10000000,*/ 100000, 1000, 100, 10, 100) ;
-      tx_size <- Array(/*100,*/ 10, 1, 0) ;
+      consumers <- Array(10000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
+      producers <- Array(10000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
+      message_size <- Array(10000000, 100000, 1000, 100, 10) ;
+      tx_size <- Array(100, 10, 1, 0) ;
       destination_count <- Array(1, 10, 100)  // Array(1, 10, 100, 1000, 10000) ;
     ) {
 
-      val name =
-        "throughput: "+
-        ", mode: "+mode+
-        ", persistent: "+persistent+
-        ", message_size: "+message_size+
-        ", tx_size: "+tx_size+
-        ", selector_complexity: "+selector_complexity+
-        ", destination_count: "+destination_count+
-        ", consumers: "+consumers+
-        ", producers: "+producers
+      var skip = false
 
-      benchmark(name) { g=>
-        g.destination_type = mode
-        g.persistent = persistent
-        g.ack_mode = if ( persistent ) "client" else "auto"
-        g.message_size = message_size
-        g.tx_size = tx_size
-        g.destination_count = destination_count
-        g.consumers = consumers
-        g.producers = producers
+      // Skip on odds scenario combinations like more destinations than clients.
+      if ( (consumers<destination_count) || (producers<destination_count) ) {
+        skip = true
+      }
+      // When using lots of clients, only test against small txs and small messages.
+      if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
+        skip = true
+      }
+      // Don't benchmark large messages /w lots of clients to avoid OOM
+      if ( message_size >= 10000000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
+        skip = true
+      }
+      // Don't benchmark large transactions /w lots of clients to avoid OOM
+      if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
+        skip = true
+      }
+
+      if ( !skip ) {
+        val name =
+          "throughput: "+
+          ", mode: "+mode+
+          ", persistent: "+persistent+
+          ", message_size: "+message_size+
+          ", tx_size: "+tx_size+
+          ", selector_complexity: "+selector_complexity+
+          ", destination_count: "+destination_count+
+          ", consumers: "+consumers+
+          ", producers: "+producers
+
+        benchmark(name) { g=>
+          g.destination_type = mode
+          g.persistent = persistent
+          g.ack_mode = if ( persistent ) "client" else "auto"
+          g.message_size = message_size
+          g.tx_size = tx_size
+          g.destination_count = destination_count
+          g.consumers = consumers
+          g.producers = producers
+        }
       }
     }
 
