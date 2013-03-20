@@ -315,36 +315,41 @@ class Benchmark extends Action {
       destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
     ) {
 
-      var skip = false
+      var skip:String = null
 
       // Skip on odds scenario combinations like more destinations than clients.
       if ( (consumers<destination_count) || (producers<destination_count) ) {
-        skip = true
+        skip = "more destinations than clients"
       }
       // When using lots of clients, only test against small txs and small messages.
-      if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
-        skip = true
+      else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
+        skip = "When using lots of clients, only test against small txs and small messages."
       }
       // Don't benchmark large messages /w lots of clients to avoid OOM
-      if ( message_size >= 10000000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
-        skip = true
+      else if ( message_size >= 10000000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
+        skip = "Don't benchmark large messages /w lots of clients."
       }
       // Don't benchmark large transactions /w lots of clients to avoid OOM
-      if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
-        skip = true
+      else if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
+        skip = "Don't benchmark large transactions /w lots of clients"
       }
 
-      if ( !skip ) {
-        val name =
-          "throughput: "+
-          ", mode: "+mode+
-          ", persistent: "+persistent+
-          ", message_size: "+message_size+
-          ", tx_size: "+tx_size+
-          ", selector_complexity: "+selector_complexity+
-          ", destination_count: "+destination_count+
-          ", consumers: "+consumers+
-          ", producers: "+producers
+      val name =
+        "throughput: "+
+        ", mode: "+mode+
+        ", persistent: "+persistent+
+        ", message_size: "+message_size+
+        ", tx_size: "+tx_size+
+        ", selector_complexity: "+selector_complexity+
+        ", destination_count: "+destination_count+
+        ", consumers: "+consumers+
+        ", producers: "+producers
+
+      if ( skip!=null ) {
+        println()
+        println("scenario  : "+name)
+        println(" skipping : "+skip)
+      } else {
 
         benchmark(name) { g=>
           g.destination_type = mode
