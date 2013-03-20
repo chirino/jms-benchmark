@@ -308,11 +308,11 @@ class Benchmark extends Action {
       mode <- Array("queue", "topic") ;
       persistent <- Array(true, false) ;
       selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-      consumers <- Array(10000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
-      producers <- Array(10000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
+      consumers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
+      producers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
       message_size <- Array(10000000, 100000, 1000, 100, 10) ;
       tx_size <- Array(100, 10, 1, 0) ;
-      destination_count <- Array(1, 10, 100)  // Array(1, 10, 100, 1000, 10000) ;
+      destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
     ) {
 
       var skip = false
