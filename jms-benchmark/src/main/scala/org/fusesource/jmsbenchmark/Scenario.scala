@@ -23,6 +23,11 @@ import scala.collection.mutable.ListBuffer
 
 case class DataSample(time:Long, produced:Long, consumed:Long, errors:Long, max_latency:Long)
 
+abstract class SleepFn {
+  def init(time:Long):Unit
+  def apply(client:Scenario#Client):Long
+}
+
 object Scenario {
   val MESSAGE_ID:Array[Byte] = "message-id"
   val NEWLINE = '\n'.toByte
@@ -43,15 +48,11 @@ trait Scenario {
   var user_name:String = _
   var password:String = _
 
-  private var _producer_sleep: { def apply(client:Scenario#Client): Int; def init(time: Long) } = new { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
-  def producer_sleep(client:Client) = _producer_sleep(client:Scenario#Client)
-  def producer_sleep_= (new_value: Int) = _producer_sleep = new { def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
-  def producer_sleep_= (new_func: { def apply(client:Scenario#Client): Int; def init(time: Long) }) = _producer_sleep = new_func
+  var _producer_sleep: SleepFn = new SleepFn { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
+  def producer_sleep_= (new_value: Int) = _producer_sleep = new SleepFn{ def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
 
-  private var _consumer_sleep: { def apply(client:Scenario#Client): Int; def init(time: Long) } = new { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
-  def consumer_sleep(client:Scenario#Client) = _consumer_sleep(client)
-  def consumer_sleep_= (new_value: Int) = _consumer_sleep = new { def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
-  def consumer_sleep_= (new_func: { def apply(client:Scenario#Client): Int; def init(time: Long) }) = _consumer_sleep = new_func
+  var _consumer_sleep: SleepFn = new SleepFn { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
+  def consumer_sleep_= (new_value: Int) = _consumer_sleep = new SleepFn { def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
 
   var producers = 1
   var producers_per_sample = 0
@@ -179,12 +180,12 @@ trait Scenario {
     "  producers             = "+producers+"\n"+
     "  message_size          = "+message_size+"\n"+
     "  persistent            = "+persistent+"\n"+
-    "  producer_sleep (ms)   = "+producer_sleep(null)+"\n"+
+    "  producer_sleep (ms)   = "+_producer_sleep(null)+"\n"+
     "  headers               = "+headers.mkString(", ")+"\n"+
     "  \n"+
     "  --- Consumer Properties ---\n"+
     "  consumers             = "+consumers+"\n"+
-    "  consumer_sleep (ms)   = "+consumer_sleep(null)+"\n"+
+    "  consumer_sleep (ms)   = "+_consumer_sleep(null)+"\n"+
     "  selector              = "+selector+"\n"+
     "  durable               = "+durable+"\n"+
     ""

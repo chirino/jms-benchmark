@@ -245,125 +245,114 @@ class Benchmark extends Action {
     }
   }
 
-  trait sleepFunction {
-
-    protected val SLEEP = -500
-
-    protected var init_time: Long = 0
-
-    def init(time: Long) { init_time = time }
-
-    def now() = { (System.currentTimeMillis() - init_time) / 1000 }
-
-    def apply() = 0
-
-    /* Sleeps for short periods of time (fast) or long ones (slow) in bursts */
-    def burstSleep(slow: Int = 100, fast: Int = 0, duration: Int = 1, period: Int = 10) = {
-      new {
-        var burstLeft: Long = 0
-        var previousTime: Long = 0
-        def apply(time: Long) = {
-          if (time != previousTime) {
-            if (burstLeft > 0) {
-              burstLeft -= time-previousTime
-              if(burstLeft < 0){
-                burstLeft = 0
-              }
-            } else {
-              if (util.Random.nextInt(period) == 0) {
-                burstLeft = duration
-              }
-            }
-            previousTime = time
-          }
-          if (burstLeft > 0) fast else slow
-        }
-      }
-    }
-  }
 
   def run_benchmarks = {
 
-//    // Load up a queue for 30 seconds..
-//    benchmark("queue load", drain=false, sc=30) { g=>
-//      g.destination_type = "queue"
-//      g.persistent = true
-//      g.ack_mode = "auto"
-//      g.message_size = 20
-//      g.tx_size = 1000
-//      g.producers = 10
-//      g.consumers = 0
-//    }
-//
-//    // Unload the queue
-//    benchmark("queue unload", drain=true, sc=30) { g=>
-//      g.destination_type = "queue"
-//      g.persistent = true
-//      g.ack_mode = "auto"
-//      g.message_size = 20
-//      g.producers = 0
-//      g.consumers = 10
-//    }
-
+    // Load up a queue for 30 seconds..
+    val load_unload_samples = 60
     for(
-      mode <- Array("queue", "topic") ;
-      persistent <- Array(true, false) ;
-      selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-      consumers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
-      producers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
-      message_size <- Array(10000000, 100000, 1000, 100, 10) ;
-      tx_size <- Array(100, 10, 1, 0) ;
-      destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
+      persistent <- Array(true, false)
     ) {
+      benchmark("queue load and unload: persistent: "+persistent, sc=load_unload_samples) { g=>
+        g.destination_type = "queue"
+        g.persistent = persistent
+        g.ack_mode = "auto"
+        g.message_size = 10
+        g.tx_size = 0
+        g.producers = 10
+        g.consumers = 10
 
-      var skip:String = null
+        // producer will sleep midway..
+        g._producer_sleep = new SleepFn {
+          var start = 0L
+          def init(time: Long) { start = time }
+          def apply(client:Scenario#Client) = {
+            val elapsed = System.currentTimeMillis() - start
+            val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
+            if (elapsed > midpoint ) {
+              (load_unload_samples/2)*sample_interval
+            } else {
+              0
+            }
+          }
+        }
 
-      // Skip on odds scenario combinations like more destinations than clients.
-      if ( (consumers<destination_count) || (producers<destination_count) ) {
-        skip = "more destinations than clients"
-      }
-      // When using lots of clients, only test against small txs and small messages.
-      else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
-        skip = "When using lots of clients, only test against small txs and small messages."
-      }
-      // Don't benchmark large messages /w lots of clients to avoid OOM
-      else if ( message_size >= 100000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
-        skip = "Don't benchmark large messages /w lots of clients."
-      }
-      // Don't benchmark large transactions /w lots of clients to avoid OOM
-      else if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
-        skip = "Don't benchmark large transactions /w lots of clients"
-      }
-
-      val name =
-        "throughput: "+
-        ", mode: "+mode+
-        ", persistent: "+persistent+
-        ", message_size: "+message_size+
-        ", tx_size: "+tx_size+
-        ", selector_complexity: "+selector_complexity+
-        ", destination_count: "+destination_count+
-        ", consumers: "+consumers+
-        ", producers: "+producers
-
-      if ( skip!=null ) {
-        println()
-        println("scenario  : "+name)
-        println(" skipping : "+skip)
-      } else {
-
-        benchmark(name) { g=>
-          g.destination_type = mode
-          g.persistent = persistent
-          g.ack_mode = if ( persistent ) "client" else "auto"
-          g.message_size = message_size
-          g.tx_size = tx_size
-          g.destination_count = destination_count
-          g.consumers = consumers
-          g.producers = producers
+        // consumer will sleep until midway through the scenario.
+        g._consumer_sleep = new SleepFn {
+          var start = 0L
+          def init(time: Long) { start = time }
+          def apply(client:Scenario#Client) = {
+            val elapsed = System.currentTimeMillis() - start
+            val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
+            if (elapsed <  midpoint ) {
+              midpoint - elapsed
+            } else {
+              0
+            }
+          }
         }
       }
     }
+
+//    for(
+//      mode <- Array("queue", "topic") ;
+//      persistent <- Array(true, false) ;
+//      selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
+//      consumers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
+//      producers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
+//      message_size <- Array(10000000, 100000, 1000, 100, 10) ;
+//      tx_size <- Array(100, 10, 1, 0) ;
+//      destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
+//    ) {
+//
+//      var skip:String = null
+//
+//      // Skip on odds scenario combinations like more destinations than clients.
+//      if ( (consumers<destination_count) || (producers<destination_count) ) {
+//        skip = "more destinations than clients"
+//      }
+//      // When using lots of clients, only test against small txs and small messages.
+//      else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
+//        skip = "When using lots of clients, only test against small txs and small messages."
+//      }
+//      // Don't benchmark large messages /w lots of clients to avoid OOM
+//      else if ( message_size >= 100000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
+//        skip = "Don't benchmark large messages /w lots of clients."
+//      }
+//      // Don't benchmark large transactions /w lots of clients to avoid OOM
+//      else if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
+//        skip = "Don't benchmark large transactions /w lots of clients"
+//      }
+//
+//      val name =
+//        "throughput: "+
+//        ", mode: "+mode+
+//        ", persistent: "+persistent+
+//        ", message_size: "+message_size+
+//        ", tx_size: "+tx_size+
+//        ", selector_complexity: "+selector_complexity+
+//        ", destination_count: "+destination_count+
+//        ", consumers: "+consumers+
+//        ", producers: "+producers
+//
+//      if ( skip!=null ) {
+//        println()
+//        println("scenario  : "+name)
+//        println(" skipping : "+skip)
+//      } else {
+//
+//        benchmark(name) { g=>
+//          g.destination_type = mode
+//          g.persistent = persistent
+//          g.ack_mode = if ( persistent ) "client" else "auto"
+//          g.message_size = message_size
+//          g.tx_size = tx_size
+//          g.destination_count = destination_count
+//          g.consumers = consumers
+//          g.producers = producers
+//        }
+//      }
+//    }
 
     for(
       mode <- Array("topic", "queue") ;
@@ -382,7 +371,7 @@ class Benchmark extends Action {
         g.message_size = 10
         g.producers = 1
         g.consumers = 10
-        g.consumer_sleep_=(new {
+        g._consumer_sleep = new SleepFn{
           def apply(client:Scenario#Client) = {
             // the client /w id 2 will be the slow one.
             if ( client.id == 2 )  {
@@ -392,7 +381,7 @@ class Benchmark extends Action {
             }
           }
           def init(time: Long) {}
-        })
+        }
       }
     }
   }
