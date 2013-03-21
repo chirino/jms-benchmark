@@ -326,7 +326,7 @@ class Benchmark extends Action {
         skip = "When using lots of clients, only test against small txs and small messages."
       }
       // Don't benchmark large messages /w lots of clients to avoid OOM
-      else if ( message_size >= 10000000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
+      else if ( message_size >= 100000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
         skip = "Don't benchmark large messages /w lots of clients."
       }
       // Don't benchmark large transactions /w lots of clients to avoid OOM
