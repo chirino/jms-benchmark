@@ -155,6 +155,7 @@ class Benchmark extends Action {
   }
 
   private def multi_benchmark(names:List[String], drain:Boolean=true, sc:Int=sample_count, is_done: (List[Scenario])=>Boolean = null)(init_func: (List[Scenario])=>Unit ):Unit = {
+    Runtime.getRuntime.gc()
     val scenarios:List[Scenario] = names.map { name=>
       val scenario = create_scenario
       scenario.name = name
