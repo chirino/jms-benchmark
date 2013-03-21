@@ -120,11 +120,10 @@ class Benchmark extends Action {
     os.println("""    "sample_interval": %d,""".format(sample_interval))
     os.println("""    "warm_up_count": %d""".format(warm_up_count))
     os.println("""  },""")
+    os.print("""  "scenarios":[""")
 
-    var counter = 0
-    os.println(samples.map{ case (name, sample) =>
-      counter += 1
-      """  "scenario_%d": {
+    os.print(samples.map{ case (name, sample) =>
+      """  {
     "parameters": { %s },
     "timestamp": %s,
     "producer tp": %s,
@@ -132,7 +131,6 @@ class Benchmark extends Action {
     "max latency": %s,
     "errors": %s
   }""".format(
-        counter,
         name,
         json_format(sample.map(_.time)),
         json_format(sample.map(_.produced)),
@@ -141,7 +139,7 @@ class Benchmark extends Action {
         json_format(sample.map(_.errors))
       )
     }.mkString(",\n"))
-    os.println("\n}")
+    os.println("]\n}")
 
     os.close
     println("===================================================================")
