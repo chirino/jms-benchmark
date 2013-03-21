@@ -118,22 +118,30 @@ class Benchmark extends Action {
     os.println("""    "url": "%s",""".format(url))
     os.println("""    "sample_count": %d,""".format(sample_count))
     os.println("""    "sample_interval": %d,""".format(sample_interval))
-    os.println("""    "warm_up_count": %d,""".format(warm_up_count))
+    os.println("""    "warm_up_count": %d""".format(warm_up_count))
     os.println("""  },""")
 
     var counter = 0
-    for ( (name, sample) <- samples ) {
+    os.println(samples.map{ case (name, sample) =>
       counter += 1
-      os.println("""  "scenario_%d": {""".format(counter))
-      os.println("""    "parameters": { %s },""".format(name))
-      os.println("""    "timestamp": %s,""".format(json_format(sample.map(_.time))))
-      os.println("""    "producer tp": %s,""".format(json_format(sample.map(_.produced))))
-      os.println("""    "consumer tp": %s,""".format(json_format(sample.map(_.consumed))))
-      os.println("""    "max latency": %s,""".format(json_format(sample.map(_.max_latency))))
-      os.println("""    "errors": %s""".format(json_format(sample.map(_.errors))))
-      os.println("""  },""")
-    }
-    os.println("}")
+      """  "scenario_%d": {
+    "parameters": { %s },
+    "timestamp": %s,
+    "producer tp": %s,
+    "consumer tp": %s,
+    "max latency": %s,
+    "errors": %s
+  }""".format(
+        counter,
+        name,
+        json_format(sample.map(_.time)),
+        json_format(sample.map(_.produced)),
+        json_format(sample.map(_.consumed)),
+        json_format(sample.map(_.max_latency)),
+        json_format(sample.map(_.errors))
+      )
+    }.mkString(",\n"))
+    os.println("\n}")
 
     os.close
     println("===================================================================")
@@ -256,7 +264,8 @@ class Benchmark extends Action {
     for(
       persistent <- Array(true, false)
     ) {
-      benchmark("group: 'queue load and unload', persistent: "+persistent, sc=load_unload_samples) { g=>
+      val name = """ "group": "queue load and unload", "persistent": %s """.format(persistent)
+      benchmark(name, sc=load_unload_samples) { g=>
         g.destination_type = "queue"
         g.persistent = persistent
         g.ack_mode = "auto"
@@ -327,17 +336,7 @@ class Benchmark extends Action {
         skip = "Don't benchmark large transactions /w lots of clients"
       }
 
-      val name =
-        "group: 'throughput'"+
-        ", mode: '"+mode+"'"+
-        ", persistent: "+persistent+
-        ", message_size: "+message_size+
-        ", tx_size: "+tx_size+
-        ", selector_complexity: "+selector_complexity+
-        ", destination_count: "+destination_count+
-        ", consumers: "+consumers+
-        ", producers: "+producers
-
+      val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
       if ( skip!=null ) {
         println()
         println("scenario  : "+name)
@@ -362,11 +361,7 @@ class Benchmark extends Action {
       persistent <- Array(true, false)
     ) {
 
-      val name =
-        "group: 'slow consumer'"+
-        ", mode: '"+mode+"', "+
-        ", persistent: "+persistent
-
+      val name = """ "group": "slow consumer", "mode": "%s", "persistent": %s """.format(mode, persistent)
       benchmark(name) { g=>
         g.destination_type = mode
         g.persistent = persistent
