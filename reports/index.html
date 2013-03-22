@@ -110,10 +110,19 @@
     </div>
     <div class="span9">
       {{#each scenario in App.BenchmarksController.matching_scenarios}}
-        <strong>Scenario: {{scenario.title}}</strong>
-        <div style="padding:2em">
+      <div class="row">
+        <div class="span3">
+          <div class="well">
+            <label style="margin:0; font-size:90%"><strong>metric:</strong> {{scenario.metrics}}</label>
+            {{#each entry in scenario.parameters}}
+            <label style="margin:0; font-size:90%"><strong>{{entry.key}}:</strong> {{entry.value}}</label>
+            {{/each}}
+          </div>
+        </div>
+        <div class="span6">
         {{view App.Chart contentBinding="scenario"}}
         </div>
+      </div>
       {{/each}}
     </div>
   </div>

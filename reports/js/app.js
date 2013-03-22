@@ -17,6 +17,15 @@ App = Ember.Application.create({
     }
     return rc;
   },
+  
+  map_entry_array:function(map) {
+    var rc = []
+    for( key in map ) {
+      rc.push({key:key, value:map[key] })
+    }
+    return rc;
+  },
+
 });
 
 App.BenchmarksController = Em.ArrayController.extend({
@@ -102,13 +111,15 @@ App.BenchmarksController = Em.ArrayController.extend({
     var show_consumer_tp = this.get('show_consumer_tp');
     var show_max_latency = this.get('show_max_latency');
     var show_errors = this.get('show_errors');
-    
+        
     var group_by = {};
     var add_data = function(broker_name, scenario, metrics, units, scale_fn) {
       var group_key = JSON.stringify(scenario.parameters)+":"+metrics      
       if( !group_by[group_key] ) {
         group_by[group_key] = {
           title:group_key,
+          parameters: App.map_entry_array(scenario.parameters),
+          metrics:metrics,
           lines:[]
         }
       }
@@ -178,7 +189,7 @@ function with_commas(nStr) {
 App.Chart = Ember.View.extend({
   content:null,
   width:"20em",
-  height:"10em",
+  height:"15em",
   didInsertElement: function() {
     
     var content = this.get('content');

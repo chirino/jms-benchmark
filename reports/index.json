@@ -1,0 +1,4 @@
+{
+  "platforms":["perf46.lab.bos.redhat.com"],
+  "products":["activemq-5.8.0-openwire"]
+}
