@@ -1,0 +1,90 @@
+.alert {
+  padding: 8px 35px 8px 14px;
+}
+
+.btn { color: #333; }
+.btn:hover { color: #222; }
+
+.btn-primary:hover, .btn-primary,
+.btn-success:hover, .btn-success,
+.btn-warning:hover, .btn-warning,
+.btn-danger:hover, .btn-danger
+{ color: #fff; }
+
+.well-title {
+  padding-bottom: .2em;
+  margin-bottom: 1em;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 20px;
+  color: #000;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  border-bottom: 1px solid #ccc;
+}
+
+.details {
+  font-size: 11px;
+  line-height: 20px;
+  color: #444;
+}
+
+table.details {
+  margin: 0;
+}
+
+strong {
+  color: #000;
+}
+
+html,
+body,
+div.application {
+  height: 100%;
+}
+
+#notfooter {
+  height: auto !important;
+  height: 100%;
+  min-height: 100%;
+  margin: 0 auto -30px;
+}
+
+#footer,
+.footer-push {
+  height: 30px;
+}
+
+#footer {
+  font-size: 10px;
+  color: #ccc;
+  background-color: #000;
+}
+
+.footer-inner {
+  padding:0.5em 2em;
+}
+
+.nowrap {
+  white-space:nowrap;
+}
+
+@media (max-width: 767px) {
+  #footer {
+    margin-right: -20px;
+    margin-left: -20px;
+  }
+}
+
+.input-number {
+  width:3em;
+}
+
+.nomargin {
+  margin:0;
+}
+
+.center{text-align:center;}
+
+body{font-weight:normal;}

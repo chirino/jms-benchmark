@@ -7,33 +7,53 @@ if [ -z "${SKIP_REPORT}" ] ; then
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
 
-# Get a list of the log and json files.
-cd "${REPORTS_HOME}"
-LOG_FILES=`ls *.log 2> /dev/null` 
-JSON_FILES=`ls *.json | sed 's|.json|",|' | sed 's|^|"|'`
-JSON_FILES=`echo $JSON_FILES | sed 's|,$||'` #trim the trailing comma
+# Get a list of json files...
+cd "${REPORTS_HOME}/.."
+
+JSON_FILES=""
+for f in `ls */*.json | grep -v '/platform.json' 2> /dev/null` ; do
+  JSON_FILES+="$f
+"
+done
+
+PLATFORMS=""
+for f in $JSON_FILES ; do
+  PLATFORMS+="$(dirname $f)
+"
+done
+PLATFORMS=`(sort <<< "$PLATFORMS") | uniq`
+PLATFORMS=$(cat <<< "$PLATFORMS" | sed 's|$|",|' | sed 's|^|"|')
+PLATFORMS=$(echo $PLATFORMS | sed 's|,$||' | sed 's|"", ||')
+
+PRODUCTS=""
+for f in $JSON_FILES ; do
+  PRODUCTS+="$(basename $f | sed 's/.json//')
+$PRODUCTS"
+done
+PRODUCTS=`(sort <<< "$PRODUCTS") | uniq`
+PRODUCTS=$(cat <<< "$PRODUCTS" | sed 's|$|",|' | sed 's|^|"|')
+PRODUCTS=$(echo $PRODUCTS | sed 's|,$||' | sed 's|"", ||')
+
+cat > "index.json" <<EOF
+{
+  "platforms":[${PLATFORMS}],
+  "products":[${PRODUCTS}]
+}
+EOF
+
 cd - > /dev/null
-
-LOGS_HTML=""
-if [ ! -z "${LOG_FILES}" ] ; then
-  LOGS_HTML="
-  <h2>Console logs of the benchmarked servers</h2>
-  <ul>"
-  for f in ${LOG_FILES} ; do
-    LOGS_HTML="${LOGS_HTML}
-  <li><a href="$f">$f</a></li>"
-  done
-  LOGS_HTML="${LOGS_HTML}
-  </ul>"
-fi
-
-mkdir -p "${REPORTS_HOME}/resources"
-cat "${BASEDIR}/src/main/html/template.html" | sed "s|PRODUCT_LIST|$JSON_FILES|" | perl -pi -e "s|LOGS_HTML|$LOGS_HTML|" > "${REPORTS_HOME}/index.html"
-cp "${BASEDIR}/src/main/html/resources/"* "${REPORTS_HOME}/resources"
 
 #
 # Only create it if it does not exist as it may get 
 # customized by hand later.
+if [ ! -f "${REPORTS_HOME}/platform.json" ] ; then
+  cat > "${REPORTS_HOME}/platform.json" <<EOF
+{
+  "description":"$(uname -a)"
+}
+EOF
+  
+fi
 if [ ! -f "${REPORTS_HOME}/server-info.html" ] ; then
   
   cat > "${REPORTS_HOME}/server-info.html" <<EOF
