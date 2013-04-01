@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# This shell script automates running the jms-benchmark [1] against the
+# Apache Qpid project [2].
+#
+# [1]: http://github.com/chirino/jms-benchmark
+# [2]: http://qpid.apache.org
+#
+
+true \
+${SERVER_SETUP:=true} \
+${SERVER_ADDRESS:=localhost} \
+${PROTON_VERSION:=0.3} \
+${PROTON_DOWNLOAD:="http://archive.apache.org/dist/qpid/proton/${PROTON_VERSION}/qpid-proton-c-${PROTON_VERSION}.tar.gz"} \
+${QPID_VERSION:=0.20} \
+${QPID_DOWNLOAD:="https://github.com/apache/qpid/archive/${QPID_VERSION}.zip"} \
+${SERVER_NAME:="qpid-c-${QPID_VERSION}"}
+#"
+
+BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
+. ${BASEDIR}/bin/benchmark-setup
+
+function server_start() {
+  export PROTON_SRC="${WORKSPACE}/qpid-proton-c-${PROTON_VERSION}"
+  export QPID_SRC="${WORKSPACE}/qpidc-${QPID_VERSION}"
+  export QPID_TOOLS_SRC="${WORKSPACE}/qpid-tools-${QPID_VERSION}"
+  export QPID_WORK="${WORKSPACE}/qpidc-${QPID_VERSION}-work"
+
+  # build and install..
+  if [ ! -f "/usr/sbin/qpidd" ]; then
+
+    # Install build dependencies..
+    case "`uname`" in
+      Linux*) 
+        # On a redhat system?
+        which yum > /dev/null
+        if [ $? -eq 0 ] ; then
+          sudo yum groupinstall -y "Development Tools"
+          sudo yum install -y cmake uuid-devel boost-devel libuuid-devel e2fsprogs-devel pkgconfig gcc-c++ make autoconf automake help2man libtool doxygen graphviz ruby
+        else 
+          # Perhaps we are on a ubuntu system..
+          which apt-get > /dev/null
+          if [ $? -eq 0 ] ; then
+            sudo apt-get install build-essential uuid-dev libsasl2-dev sasl2-bin libboost-dev
+          fi
+        fi
+      ;;
+    esac
+
+    # build and install proton..
+    if [ ! -f "/usr/include/proton/message.h" ]; then
+      # download the sources..
+      if [ ! -d "${PROTON_SRC}" ]; then
+        cd "${WORKSPACE}"
+        wget --no-check-certificate "$PROTON_DOWNLOAD" -O "qpid-proton-c-${PROTON_VERSION}.tar.gz"
+        tar -zxvf qpid-proton-c-${PROTON_VERSION}.tar.gz
+        rm -rf qpid-proton-c-${PROTON_VERSION}.tar.gz
+      fi
+
+      cd "${PROTON_SRC}"
+      cmake -DCMAKE_INSTALL_PREFIX="/usr" .
+      sudo make install
+    fi
+
+    if [ ! -d "${QPID_SRC}" ]; then
+      cd "${WORKSPACE}"
+      mkdir temp
+      cd temp
+      wget --no-check-certificate "$QPID_DOWNLOAD" -O "qpid-cpp-${QPID_VERSION}.zip"
+      unzip qpid-cpp-${QPID_VERSION}.zip
+      rm -rf qpid-cpp-${QPID_VERSION}.zip
+      mv qpid-* ${QPID_SRC}
+    fi
+
+    cd "${QPID_SRC}/qpid/cpp"
+    cmake -DCMAKE_INSTALL_PREFIX="/usr" .
+    sudo make install
+
+    cd "${QPID_SRC}/qpid/python"
+    sudo python setup.py install
+    
+    cd "${QPID_SRC}/qpid/tools"
+    sudo python setup.py install
+  fi
+
+  # Cleanup preious executions.
+  server_stop
+  rm -rf ${QPID_WORK}/*
+  mkdir -p "${QPID_WORK}/data"
+
+  CONSOLE_LOG="${REPORTS_HOME}/qpid-c-${QPID_VERSION}.log"
+  /usr/sbin/qpidd --load-module /usr/lib64/qpid/daemon/amqp.so --data-dir "${QPID_WORK}/data" > "${CONSOLE_LOG}" 2>&1 &
+  QPID_PID=$!
+  echo "Started Qpid with PID: ${QPID_PID}"
+  sleep 5
+  for (( i=0; i < 10 ; i++)) ; do
+    /usr/bin/qpid-config add queue /queue/loadq-$i
+    /usr/bin/qpid-config add exchange fanout /topic/loadt-$i
+  done
+
+  cat ${CONSOLE_LOG}
+}
+
+if [ $SERVER_SETUP == true ] ; then
+  server_start
+fi
+
+#
+# Run the benchmark
+#
+cd "${BASEDIR}/jms-benchmark-qpid"
+export CLASSPATH=`${MVN} dependency:build-classpath | grep -v "\["`
+export CLASSPATH="${CLASSPATH}:target/classes"
+benchmark --provider org.fusesource.jmsbenchmark.QpidScenario --display-errors --url "amqp://admin:admin@clientid/${SERVER_ADDRESS}?brokerlist='tcp://${SERVER_ADDRESS}:5672'" "${REPORTS_HOME}/${SERVER_NAME}.json"
+
+# Create a report.
+"${BASEDIR}/bin/benchmark-report" $*
