@@ -307,8 +307,7 @@ $.ajax({ url: "index.json", dataType:"json",
     products = index_json["products"];
     platforms = index_json["platforms"];
     platforms.forEach(function(platform) {
-      $.ajax({ url: platform+"/platform.json", dataType:"json", success: function(data) {
-        var platform_description = data["description"];
+      var done = function(platform_description) {
         products.forEach(function(product) {
           $.ajax({ url: platform+"/"+product+".json", dataType:"json", success: function(data) {
             data.show = true;
@@ -317,7 +316,13 @@ $.ajax({ url: "index.json", dataType:"json",
             App.BenchmarksController.get('content').pushObject(data);
           }});
         });
-      }});
+      };
+      $.ajax({ url: platform+"/platform.json", dataType:"json", success: function(data) {
+        done(data["description"]);
+      }, error: function(){
+        done("unknown");
+      }
+      });
     });
   },
   error: function(a,b,c,d) {
