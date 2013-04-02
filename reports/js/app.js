@@ -1,3 +1,16 @@
+// Assumes array has already been sorted.
+Array.prototype.percentile = function(p) {
+  var i = (this.length - 1) * p + 1;
+  if (i <= 1) { 
+    return this[0];
+  } else if (i >= this.length)  {
+    return this[this.length - 1];
+  } else {
+   var ii = Math.floor(i);
+   return this[ii - 1] + (ii - i) * (this[ii] - this[ii - 1]);
+  }     
+};
+
 App = Ember.Application.create({
   group_by:function(data, grouper) {
     var groups = {};
@@ -35,6 +48,7 @@ App.BenchmarksController = Em.ArrayController.extend({
   show_consumer_tp:true,
   show_max_latency:false,
   show_errors:false,  
+  box_wisker:false,  
 
   benchmarks_by_platform:function() {
     return App.group_by(this.get('content'), function(benchmark){
@@ -190,7 +204,17 @@ App.Chart = Ember.View.extend({
   content:null,
   width:"20em",
   height:"15em",
+  box_wisker:false,
+  
   didInsertElement: function() {
+    this.redraw();
+  },
+  
+  on_change: function() {
+    this.redraw();
+  }.observes("content", "width", "height", "box_wisker"),
+  
+  redraw: function() {
     
     var content = this.get('content');
     var width = this.get('width')
@@ -201,6 +225,7 @@ App.Chart = Ember.View.extend({
     var chart_div = $(document.createElement('div'));
     var legend_div = $(document.createElement('div'));
 
+    this.$().html("");
     this.$().append(
       $(document.createElement('table')).append(
         $(document.createElement('row')).css({"vertical-align":"top"}).append(
@@ -223,43 +248,70 @@ App.Chart = Ember.View.extend({
       '-moz-border-radius': '8px'
     });
           
-    var options = {
-      legend: { container: legend_div, show: true},
-      series: { lines: { show: true }  },
-      yaxis: {
-        min:0,
-        tickFormatter: function(y, axis) {
-          return with_commas(y.toFixed(axis.tickDecimals));
-        }
-      },              
-      crosshair: { mode: "x" },
-      lines: { show: true },
-      grid: { hoverable: true, autoHighlight: false }
-    };
-        
-    var data_lines = content.lines.map(function(line){
-      var start = line.x[0];
-      var data = [];
-      for( var i=0; i < line.x.length; i++) {
-        data.push([((line.x[i]-start)/1000)+1, line.scale_fn(line.y[i])]);
+    var box_wisker = this.get('box_wisker');
+    var data_lines, options;
+    if( box_wisker ) {
+      options = {
+        series: { boxwhisker: { show: true, useColor: true, boxWidth: 0.4, lineWidth: 0.5 }, shadowSize: 3 },
+        legend: { container: legend_div, show: true},
+        xaxis: { show:false }
+      };
+      data_lines = content.lines.map(function(line){
+        var data = line.y.sortNumber();
+        return {
+          label: line.label, 
+          data:[[1, data.percentile(0)], [2, data.percentile(.25)],  [3, data.percentile(.50)], [4, data.percentile(.75)], [5, data.percentile(1)] ], 
+          units: line.units
+        };
+      });
+    } else {
+      options = {
+        legend: { container: legend_div, show: true},
+        boxwhisker: { show: false },
+        lines: { show: true },
+        crosshair: { mode: "x" },
+        grid: { hoverable: true, autoHighlight: false },
+        yaxis: {
+          // min:0,
+          tickFormatter: function(y, axis) {
+            return with_commas(y.toFixed(axis.tickDecimals));
+          }
+        },              
       }
-      return {label: line.label, data:data, units: line.units };
-    });
+      data_lines = content.lines.map(function(line){
+        var start = line.x[0];
+        var data = [];
+        for( var i=0; i < line.x.length; i++) {
+          data.push([((line.x[i]-start)/1000)+1, line.scale_fn(line.y[i])]);
+        }
+        return {label: line.label, data:data, units: line.units };
+      });
+    }
 
     var plot = $.plot(chart_div, data_lines, options);
         
-    function trigger_legend_update(event, pos, item) {
+    function trigger_legend_update(event, pos) {
 
       var legend_labels = legend_div.find(".legendLabel");
       var axes = plot.getAxes();
       var out_of_range = pos==null || pos.x < axes.xaxis.min || pos.x > axes.xaxis.max || pos.y < axes.yaxis.min || pos.y > axes.yaxis.max;
       
       var dataset = plot.getData();
+      
+      var default_label = function(node, series) {
+        
+        var data = series.data.map(function(item){return item[1];});
+        node.html(series.label+"<br><strong>stdev: </strong>"+
+          with_commas(data.stdDev().toFixed(2))+" <strong>mean: </strong>"+
+          with_commas(data.mean().toFixed(2))+")"
+          );
+      };
+      
       for (var i = 0; i < dataset.length; ++i) {
         var series = dataset[i];
         if( out_of_range ) {
           for (j = 0; j < series.data.length; ++j) {
-            legend_labels.eq(i).text(series.original);
+            default_label(legend_labels.eq(i), series);
           }          
         } else {
           
@@ -279,25 +331,24 @@ App.Chart = Ember.View.extend({
             else
                 y = p1[1] + (p2[1] - p1[1]) * (pos.x - p1[0]) / (p2[0] - p1[0]);
 
-            if( !series.original ) {
-              series.original = series.label;
-            }
             if( y < 100 ) {
               y = y.toFixed(3)
             } else {
               y = y.toFixed(0)
             }
-            legend_labels.eq(i).text(series.original + " = "+with_commas(y)+" "+series.units);
+            legend_labels.eq(i).html(series.label + "<br>"+with_commas(y)+" "+series.units);
           } else {
-            legend_labels.eq(i).text(series.original);
+            default_label(legend_labels.eq(i), series);
           }
           
         }
       }
     }
-
-    chart_div.bind("plothover",  trigger_legend_update);
-    chart_div.mouseout(trigger_legend_update);
+    if( !box_wisker ) {
+      chart_div.bind("plothover",  trigger_legend_update);
+      chart_div.mouseout(trigger_legend_update);
+      trigger_legend_update(null, null)
+    }    
   },
 });
 
