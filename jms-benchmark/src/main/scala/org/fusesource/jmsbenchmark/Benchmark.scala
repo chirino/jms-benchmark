@@ -344,6 +344,7 @@ class Benchmark extends Action {
         benchmark(name) { g=>
           g.destination_type = mode
           g.persistent = persistent
+          g.durable == persistent && mode == "topic"
           g.ack_mode = if ( persistent ) "client" else "auto"
           g.message_size = message_size
           g.tx_size = tx_size
@@ -363,6 +364,7 @@ class Benchmark extends Action {
       benchmark(name) { g=>
         g.destination_type = mode
         g.persistent = persistent
+        g.durable == persistent && mode == "topic"
         g.ack_mode = if ( persistent ) "client" else "auto"
         g.message_size = 10
         g.producers = 1

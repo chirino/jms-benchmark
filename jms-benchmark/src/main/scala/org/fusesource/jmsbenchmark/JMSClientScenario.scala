@@ -76,7 +76,9 @@ abstract class JMSClientScenario extends Scenario {
               reconnect_delay=0
             }
             connection = factory.createConnection(user_name, password)
-//            connection.setClientID(name)
+            if( durable ) {
+              connection.setClientID(name)
+            }
             connection.setExceptionListener(new ExceptionListener {
               def onException(exception: JMSException) {
               }
