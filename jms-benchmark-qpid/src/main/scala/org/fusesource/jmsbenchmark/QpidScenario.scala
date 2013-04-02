@@ -48,8 +48,6 @@ class QpidScenario extends JMSClientScenario {
     val client_id = user_name
     val virtual_host = ""
     val x = new AMQConnectionURL(url)
-    x.setUsername(user_name)
-    x.setPassword(password)
     x.setClientName(client_id)
     x.setVirtualHost(virtual_host)
     new AMQConnectionFactory(x)
