@@ -102,17 +102,20 @@ abstract class JMSClientScenario extends Scenario {
         }
       }
     }
-
+    var close_thread:Thread = null
     def dispose {
-      new Thread() {
-        override def run() {
-          try {
-            connection.close()
-          } catch {
-            case _ =>
+      if( close_thread==null ) {
+        close_thread = new Thread() {
+          override def run() {
+            try {
+              connection.close()
+            } catch {
+              case _ =>
+            }
           }
         }
-      }.start()
+        close_thread.start()
+      }
     }
 
     def execute:Unit
@@ -123,25 +126,42 @@ abstract class JMSClientScenario extends Scenario {
 
     def shutdown = {
       done.set(true)
-      if ( worker!=null ) {
-        dispose
-      }
+      dispose
     }
 
     def wait_for_shutdown = {
       if ( worker!=null ) {
         worker.join(5000)
         while(worker.isAlive ) {
-          println("Worker did not shutdown quickly.. interrupting thread.")
-          worker.interrupt()
-          worker.join(1000)
+          if( allow_worker_interrupt ) {
+            println("Worker did not shutdown quickly.. interrupting thread.")
+            worker.interrupt()
+            worker.join(1000)
+          } else {
+            println("Worker did not shutdown quickly...")
+            worker.join(1000)
+          }
+        }
+        if( close_thread!=null ) {
+          while(close_thread.isAlive ) {
+            if( allow_worker_interrupt ) {
+              println("Closing thread did not shutdown quickly.. interrupting thread.")
+              close_thread.interrupt()
+              close_thread.join(1000)
+            } else {
+              println("Closing thread did not shutdown quickly...")
+              close_thread.join(1000)
+            }
+          }
+          close_thread.join()
         }
         worker = null
       }
     }
-
     def name:String
   }
+
+  def allow_worker_interrupt = false
 
   class ConsumerClient(override val id: Int) extends JMSClient {
     val name: String = "consumer " + id
