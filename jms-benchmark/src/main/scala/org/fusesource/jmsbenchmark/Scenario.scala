@@ -276,6 +276,17 @@ trait Scenario {
     if( destination_type=="queue" || destination_type=="raw_queue" || durable==true ) {
       print("draining")
       consumer_counter.set(0)
+      var drained = 0L
+
+      val original_tx_size = tx_size
+      val original_consumer_sleep = _consumer_sleep
+      val original_ack_mode = ack_mode
+
+      // Lets change the consumer config to consume as fast as possible.
+      tx_size = 0
+      consumer_sleep_=(0)
+      ack_mode = "dups_ok"
+
       var consumer_clients = List[Client]()
       for (i <- 0 until destination_count) {
         val client = createConsumer(i)
@@ -284,7 +295,6 @@ trait Scenario {
       }
 
       // Keep sleeping until we stop draining messages.
-      var drained = 0L
       try {
         Thread.sleep(drain_timeout);
         def done() = {
@@ -305,6 +315,9 @@ trait Scenario {
           client.wait_for_shutdown
         }
         println(". (drained %d)".format(drained))
+        tx_size = original_tx_size
+        _consumer_sleep = original_consumer_sleep
+        ack_mode = original_ack_mode
       }
     }
   }
