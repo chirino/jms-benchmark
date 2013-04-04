@@ -63,7 +63,7 @@ function server_start() {
 #
 # Run the benchmark using the STOMP Protocol
 #
-if [ "$BENCHMARK_STOMP" == "true" ] ; then
+if [ "$BENCHMARK_APOLLO_STOMP" == "true" ] ; then
   if [ "$SERVER_SETUP" == "true" ] ; then
     server_start
   fi
@@ -75,7 +75,7 @@ if [ "$BENCHMARK_STOMP" == "true" ] ; then
 fi
 
 
-if [ "$BENCHMARK_OPENWIRE" == "true" ] ; then
+if [ "$BENCHMARK_APOLLO_OPENWIRE" == "true" ] ; then
   if [ "$SERVER_SETUP" == "true" ] ; then
     server_start
   fi
@@ -91,7 +91,7 @@ if [ "$BENCHMARK_OPENWIRE" == "true" ] ; then
 
 fi
 
-if [ "$BENCHMARK_AMQP" == "true" ] ; then
+if [ "$BENCHMARK_APOLLO_AMQP" == "true" ] ; then
   if [ "$SERVER_SETUP" == "true" ] ; then
     server_start
   fi
