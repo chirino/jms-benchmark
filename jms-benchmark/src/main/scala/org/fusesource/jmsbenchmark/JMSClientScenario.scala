@@ -131,7 +131,8 @@ abstract class JMSClientScenario extends Scenario {
 
     def wait_for_shutdown = {
       if ( worker!=null ) {
-        worker.join(5000)
+        val start = System.currentTimeMillis();
+        worker.join(6000)
         while(worker.isAlive ) {
           if( allow_worker_interrupt ) {
             println("Worker did not shutdown quickly.. interrupting thread.")
@@ -143,6 +144,10 @@ abstract class JMSClientScenario extends Scenario {
           }
         }
         if( close_thread!=null ) {
+          val wait = 6000 - (System.currentTimeMillis() - start)
+          if( wait > 0 ) {
+            close_thread.join(wait)
+          }
           while(close_thread.isAlive ) {
             if( allow_worker_interrupt ) {
               println("Closing thread did not shutdown quickly.. interrupting thread.")
