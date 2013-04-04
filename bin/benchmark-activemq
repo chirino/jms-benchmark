@@ -11,12 +11,12 @@ true \
 ${SERVER_SETUP:=true} \
 ${SERVER_ADDRESS:=localhost} \
 ${ACTIVEMQ_VERSION:=5.8.0} \
+${SERVER_NAME:="activemq-${ACTIVEMQ_VERSION}"} \
 ${ACTIVEMQ_DOWNLOAD:="http://archive.apache.org/dist/activemq/apache-activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"}
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
 #"
-
-if [ $SERVER_SETUP == true ] ; then
+function server_start() {
   #
   # Install the apollo distro
   #
@@ -47,6 +47,10 @@ if [ $SERVER_SETUP == true ] ; then
   echo "Started ActiveMQ with PID: ${ACTIVEMQ_PID}"
   sleep 5
   cat ${CONSOLE_LOG}
+}
+
+if [ $SERVER_SETUP == true ] ; then
+  server_start
 fi
 
 #
@@ -55,7 +59,7 @@ fi
 cd "${BASEDIR}/jms-benchmark-activemq"
 export CLASSPATH=`${MVN} -P download org.apache.maven.plugins:maven-dependency-plugin:2.7:build-classpath "-Dactivemq-version=${ACTIVEMQ_VERSION}" | grep -v "\[" | grep -v Download`
 export CLASSPATH="${CLASSPATH}:target/classes"
-benchmark --provider activemq --display-errors --url tcp://${SERVER_ADDRESS}:61616 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}-openwire.json"
+benchmark --provider activemq --display-errors --url tcp://${SERVER_ADDRESS}:61616 "${REPORTS_HOME}/${SERVER_NAME}-openwire.json"
 
 # Kill the broker
 if [ $SERVER_SETUP == true ] ; then

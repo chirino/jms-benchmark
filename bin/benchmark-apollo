@@ -15,12 +15,13 @@ ${BENCHMARK_OPENWIRE:=true} \
 ${BENCHMARK_AMQP:=true} \
 ${APOLLO_VERSION:=1.5} \
 ${ACTIVEMQ_VERSION:=5.8.0} \
+${SERVER_NAME:="apollo-${APOLLO_VERSION}"} \
 ${APOLLO_DOWNLOAD:="http://archive.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
 
-if [ $SERVER_SETUP == true ] ; then
+function server_start() {
 
   #
   # Install the apollo distro
@@ -42,7 +43,21 @@ if [ $SERVER_SETUP == true ] ; then
   #
   # Configuration
   export JVM_FLAGS="-server -Xmx4G -Xms1G"
-fi
+  
+  #
+  # Cleanup preious executions.
+  killall -9 java erl epmd apollo > /dev/null 2>&1
+  rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
+
+  #
+  # Start the server
+  CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
+  "${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
+  APOLLO_PID=$!
+  echo "Started Apollo with PID: ${APOLLO_PID}"
+  sleep 5
+  cat "${CONSOLE_LOG}"    
+}
 
 
 #
@@ -50,49 +65,19 @@ fi
 #
 if [ $BENCHMARK_STOMP == true ] ; then
   if [ $SERVER_SETUP == true ] ; then
-    #
-    # Cleanup preious executions.
-    killall -9 java erl epmd apollo > /dev/null 2>&1
-    rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
-
-    #
-    # Start the server
-    CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
-    "${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
-    APOLLO_PID=$!
-    echo "Started Apollo with PID: ${APOLLO_PID}"
-    sleep 5
-    cat "${CONSOLE_LOG}"    
+    server_start
   fi
-  
   cd "${BASEDIR}/jms-benchmark-stomp"
   export CLASSPATH=`${MVN} -P download dependency:build-classpath | grep -v "\["`
   export CLASSPATH="${CLASSPATH}:target/classes"
-  benchmark --provider stomp --display-errors --url tcp://${SERVER_ADDRESS}:61613 --user-name admin --password password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-stomp.json"
-  echo ${BENCHMARK_COMMAND}
-  ${BENCHMARK_COMMAND}
-
-  if [ $SERVER_SETUP == true ] ; then
-    kill -9 ${APOLLO_PID}
-  fi
+  benchmark --provider stomp --display-errors --url tcp://${SERVER_ADDRESS}:61613 --user-name admin --password password "${REPORTS_HOME}/${SERVER_NAME}-stomp.json"
+  "${BASEDIR}/bin/benchmark-report" $*
 fi
 
 
 if [ $BENCHMARK_OPENWIRE == true ] ; then
   if [ $SERVER_SETUP == true ] ; then
-    #
-    # Cleanup preious executions.
-    killall -9 java erl epmd apollo > /dev/null 2>&1
-    rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
-
-    #
-    # Start the server
-    CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
-    "${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
-    APOLLO_PID=$!
-    echo "Started Apollo with PID: ${APOLLO_PID}"
-    sleep 5
-    cat "${CONSOLE_LOG}"
+    server_start
   fi
 
   #
@@ -101,29 +86,14 @@ if [ $BENCHMARK_OPENWIRE == true ] ; then
   cd "${BASEDIR}/jms-benchmark-activemq"
   export CLASSPATH=`${MVN} -P download dependency:build-classpath "-Dactivemq-version=${ACTIVEMQ_VERSION}" | grep -v "\["`
   export CLASSPATH="${CLASSPATH}:target/classes"
-  benchmark --provider activemq --display-errors --url tcp://${SERVER_ADDRESS}:61613 --user-name admin --password password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-openwire.json"
+  benchmark --provider activemq --display-errors --url tcp://${SERVER_ADDRESS}:61613 --user-name admin --password password "${REPORTS_HOME}/${SERVER_NAME}-openwire.json"
+  "${BASEDIR}/bin/benchmark-report" $*
 
-  if [ $SERVER_SETUP == true ] ; then
-    kill -9 ${APOLLO_PID}
-  fi
-  
 fi
 
 if [ $BENCHMARK_AMQP == true ] ; then
   if [ $SERVER_SETUP == true ] ; then
-    #
-    # Cleanup preious executions.
-    killall -9 java erl epmd apollo > /dev/null 2>&1
-    rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
-
-    #
-    # Start the server
-    CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
-    "${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
-    APOLLO_PID=$!
-    echo "Started Apollo with PID: ${APOLLO_PID}"
-    sleep 5
-    cat "${CONSOLE_LOG}"
+    server_start
   fi
 
   #
@@ -132,12 +102,8 @@ if [ $BENCHMARK_AMQP == true ] ; then
   cd "${BASEDIR}/jms-benchmark-qpid-1.0"
   export CLASSPATH=`${MVN} -P download dependency:build-classpath | grep -v "\["`
   export CLASSPATH="${CLASSPATH}:target/classes"
-  benchmark --provider org.fusesource.jmsbenchmark.Qpid10Scenario --queue-prefix queue:// --topic-prefix topic:// --display-errors --url amqp://${SERVER_ADDRESS}:61613 --user-name admin --password password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}-amqp.json"
-
-  if [ $SERVER_SETUP == true ] ; then
-    kill -9 ${APOLLO_PID}
-  fi
+  benchmark --provider org.fusesource.jmsbenchmark.Qpid10Scenario --queue-prefix queue:// --topic-prefix topic:// --display-errors --url amqp://${SERVER_ADDRESS}:61613 --user-name admin --password password "${REPORTS_HOME}/${SERVER_NAME}-amqp.json"
+  "${BASEDIR}/bin/benchmark-report" $*
 fi
   
 # Create a report.
-"${BASEDIR}/bin/benchmark-report" $*

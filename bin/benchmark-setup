@@ -2,7 +2,8 @@
 
 true \
 ${REPORTS_HOME:=$1} \
-${REPORTS_HOME:=`pwd`/reports/`hostname`}
+${PLATFORM:=`hostname`} \
+${REPORTS_HOME:=`pwd`/reports/${PLATFORM}}
 WORKSPACE="${BASEDIR}/workspace"
 
 function benchmark {
