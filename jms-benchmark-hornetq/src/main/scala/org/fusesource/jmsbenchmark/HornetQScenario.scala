@@ -23,7 +23,10 @@ class HornetQScenario extends JMSClientScenario {
     options.put("port", u.getPort.asInstanceOf[AnyRef])
 
     val transportConfiguration = new TransportConfiguration("org.hornetq.core.remoting.impl.netty.NettyConnectorFactory", options);
+
     val cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,transportConfiguration);
+    cf.setRetryInterval(200);
+    cf.setReconnectAttempts(10);
     cf.asInstanceOf[ConnectionFactory]
   }
 

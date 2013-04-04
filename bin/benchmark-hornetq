@@ -11,7 +11,7 @@ true \
 ${SERVER_SETUP:=true} \
 ${SERVER_ADDRESS:=localhost} \
 ${HORNETQ_VERSION:=2.3.0.CR2} \
-${SERVER_NAME:="hornetq-${HORNETQ_VERSION}"}
+${SERVER_NAME:="hornetq-${HORNETQ_VERSION}"} \
 ${HORNETQ_DOWNLOAD:="http://downloads.jboss.org/hornetq/hornetq-${HORNETQ_VERSION}-bin.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
