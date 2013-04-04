@@ -280,7 +280,8 @@ class Benchmark extends Action {
             val elapsed = System.currentTimeMillis() - start
             val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
             if (elapsed > midpoint ) {
-              (load_unload_samples/2)*sample_interval
+              client.shutdown()
+              0
             } else {
               0
             }

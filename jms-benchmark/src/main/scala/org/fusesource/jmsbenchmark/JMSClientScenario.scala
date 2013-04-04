@@ -135,11 +135,11 @@ abstract class JMSClientScenario extends Scenario {
         worker.join(6000)
         while(worker.isAlive ) {
           if( allow_worker_interrupt ) {
-            println("Worker did not shutdown quickly.. interrupting thread.")
+            println(name+" worker did not shutdown quickly.. interrupting thread.")
             worker.interrupt()
             worker.join(1000)
           } else {
-            println("Worker did not shutdown quickly...")
+            println(name+" worker did not shutdown quickly...")
             worker.join(1000)
           }
         }
@@ -150,11 +150,11 @@ abstract class JMSClientScenario extends Scenario {
           }
           while(close_thread.isAlive ) {
             if( allow_worker_interrupt ) {
-              println("Closing thread did not shutdown quickly.. interrupting thread.")
+              println(name+" closing thread did not shutdown quickly.. interrupting thread.")
               close_thread.interrupt()
               close_thread.join(1000)
             } else {
-              println("Closing thread did not shutdown quickly...")
+              println(name+" closing thread did not shutdown quickly...")
               close_thread.join(1000)
             }
           }
