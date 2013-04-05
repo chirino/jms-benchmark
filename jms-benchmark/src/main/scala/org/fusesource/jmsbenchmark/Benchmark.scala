@@ -190,7 +190,8 @@ class Benchmark extends Action {
     }
 
     println()
-    print("scenario  : %s ".format(names.mkString(" and ")))
+    println("starting scenario : %s ".format(names.mkString(" and ")))
+      print("sampling : ")
 
     def with_load[T](s:List[Scenario])(proc: => T):T = {
       s.headOption match {
@@ -338,8 +339,8 @@ class Benchmark extends Action {
       val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
       if ( skip!=null ) {
         println()
-        println("scenario  : "+name)
-        println(" skipping : "+skip)
+        println("skipping  : "+name)
+        println("   reason : "+skip)
       } else {
 
         benchmark(name) { g=>
