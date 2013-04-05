@@ -65,7 +65,7 @@ abstract class JMSClientScenario extends Scenario {
     var message_counter=0L
     val done = new AtomicBoolean()
 
-    var worker = new Thread() {
+    var worker = new Thread(name+" worker") {
       override def run() {
         var reconnect_delay = 0
         while( !done.get ) {
@@ -105,7 +105,7 @@ abstract class JMSClientScenario extends Scenario {
     var close_thread:Thread = null
     def dispose {
       if( close_thread==null ) {
-        close_thread = new Thread() {
+        close_thread = new Thread(name+" closer") {
           override def run() {
             try {
               connection.close()
