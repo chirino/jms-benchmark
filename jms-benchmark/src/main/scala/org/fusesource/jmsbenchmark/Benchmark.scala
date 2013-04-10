@@ -268,12 +268,22 @@ class Benchmark extends Action {
     val scenarios_to_skip = Set(skip.split(",").map(_.trim):_* )
 
     // Load up a queue for 30 seconds..
-    if ( !scenarios_to_skip.contains("queue_staging") ) {
-      val load_unload_samples = 60
-      for(
-        persistent <- Array(true, false)
-      ) {
-        val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
+    val load_unload_samples = 60
+    for(
+      persistent <- Array(true, false)
+    ) {
+
+      var skip:String = null
+      if ( scenarios_to_skip.contains("queue_staging") ) {
+        skip = "--skip command line option"
+      }
+
+      val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
+      if ( skip!=null ) {
+        println()
+        println("skipping  : "+name)
+        println("   reason : "+skip)
+      } else {
         benchmark(name, sc=load_unload_samples) { g=>
           g.destination_type = "queue"
           g.persistent = persistent
@@ -317,66 +327,74 @@ class Benchmark extends Action {
       }
     }
 
-    if ( !scenarios_to_skip.contains("throughput") ) {
-      for(
-        mode <- Array("queue", "topic") ;
-        persistent <- Array(true, false) ;
-        selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-        consumers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
-        producers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
-        message_size <- Array(10000000, 100000, 1000, 100, 10) ;
-        tx_size <- Array(100, 10, 1, 0) ;
-        destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
-      ) {
+    for(
+      mode <- Array("queue", "topic") ;
+      persistent <- Array(true, false) ;
+      selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
+      consumers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
+      producers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
+      message_size <- Array(10000000, 100000, 1000, 100, 10) ;
+      tx_size <- Array(100, 10, 1, 0) ;
+      destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
+    ) {
 
-        var skip:String = null
+      var skip:String = null
+      if ( scenarios_to_skip.contains("throughput") ) {
+        skip = "--skip command line option"
+      }
+      // Skip on odds scenario combinations like more destinations than clients.
+      else if ( (consumers<destination_count) || (producers<destination_count) ) {
+        skip = "more destinations than clients"
+      }
+      // When using lots of clients, only test against small txs and small messages.
+      else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
+        skip = "When using lots of clients, only test against small txs and small messages."
+      }
+      // Don't benchmark large messages /w lots of clients to avoid OOM
+      else if ( message_size >= 100000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
+        skip = "Don't benchmark large messages /w lots of clients."
+      }
+      // Don't benchmark large transactions /w lots of clients to avoid OOM
+      else if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
+        skip = "Don't benchmark large transactions /w lots of clients"
+      }
 
-        // Skip on odds scenario combinations like more destinations than clients.
-        if ( (consumers<destination_count) || (producers<destination_count) ) {
-          skip = "more destinations than clients"
-        }
-        // When using lots of clients, only test against small txs and small messages.
-        else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
-          skip = "When using lots of clients, only test against small txs and small messages."
-        }
-        // Don't benchmark large messages /w lots of clients to avoid OOM
-        else if ( message_size >= 100000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
-          skip = "Don't benchmark large messages /w lots of clients."
-        }
-        // Don't benchmark large transactions /w lots of clients to avoid OOM
-        else if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
-          skip = "Don't benchmark large transactions /w lots of clients"
-        }
+      val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
+      if ( skip!=null ) {
+        println()
+        println("skipping  : "+name)
+        println("   reason : "+skip)
+      } else {
 
-        val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
-        if ( skip!=null ) {
-          println()
-          println("skipping  : "+name)
-          println("   reason : "+skip)
-        } else {
-
-          benchmark(name) { g=>
-            g.destination_type = mode
-            g.persistent = persistent
-            g.durable == persistent && mode == "topic"
-            g.ack_mode = if ( persistent ) "client" else "auto"
-            g.message_size = message_size
-            g.tx_size = tx_size
-            g.destination_count = destination_count
-            g.consumers = consumers
-            g.producers = producers
-          }
+        benchmark(name) { g=>
+          g.destination_type = mode
+          g.persistent = persistent
+          g.durable == persistent && mode == "topic"
+          g.ack_mode = if ( persistent ) "client" else "auto"
+          g.message_size = message_size
+          g.tx_size = tx_size
+          g.destination_count = destination_count
+          g.consumers = consumers
+          g.producers = producers
         }
       }
     }
 
-    if ( !scenarios_to_skip.contains("slow_consumer") ) {
-      for(
-        mode <- Array("topic", "queue") ;
-        persistent <- Array(true, false)
-      ) {
+    for(
+      mode <- Array("topic", "queue") ;
+      persistent <- Array(true, false)
+    ) {
+      var skip:String = null
+      if ( scenarios_to_skip.contains("slow_consumer") ) {
+        skip = "--skip command line option"
+      }
 
-        val name = """ "group": "slow_consumer", "mode": "%s", "persistent": %s """.format(mode, persistent)
+      val name = """ "group": "slow_consumer", "mode": "%s", "persistent": %s """.format(mode, persistent)
+      if ( skip!=null ) {
+        println()
+        println("skipping  : "+name)
+        println("   reason : "+skip)
+      } else {
         benchmark(name) { g=>
           g.destination_type = mode
           g.persistent = persistent
