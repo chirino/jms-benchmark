@@ -55,9 +55,9 @@ class QpidScenario extends JMSClientScenario {
 
   override protected def destination(i:Int):Destination = destination_type match {
     case "queue" =>
-      new AMQQueue("BURL:direct://amq.direct//qload-"+i)
+      new AMQQueue("qload_"+i+";{create:always,node:{durable:true}}")
     case "topic" =>
-      new AMQTopic("BURL:topic://amq.topic/tload"+i+"/sub")
+      new AMQTopic("amq.topic/tload"+i+"/sub")
     case _ =>
       sys.error("Unsuported destination type: "+destination_type)
   }

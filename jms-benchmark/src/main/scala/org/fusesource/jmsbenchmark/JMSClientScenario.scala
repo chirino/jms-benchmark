@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 abstract class JMSClientScenario extends Scenario {
 
+  var allow_worker_interrupt = false
+
   def createProducer(i:Int) = {
     new ProducerClient(i)
   }
@@ -165,8 +167,6 @@ abstract class JMSClientScenario extends Scenario {
     }
     def name:String
   }
-
-  def allow_worker_interrupt = false
 
   class ConsumerClient(override val id: Int) extends JMSClient {
     val name: String = "consumer " + id

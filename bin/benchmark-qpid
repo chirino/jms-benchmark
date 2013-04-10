@@ -109,8 +109,11 @@ fi
 # Run the benchmark
 #
 cd "${BASEDIR}/jms-benchmark-qpid"
+
+export QP=`find /root/rajith_hack/ -name '*.jar' | tr '\n' ':'`
+
 export CLASSPATH=`${MVN} dependency:build-classpath | grep -v "\["`
-export CLASSPATH="${CLASSPATH}:target/classes"
+export CLASSPATH="${QP}:${CLASSPATH}:target/classes"
 benchmark --provider org.fusesource.jmsbenchmark.QpidScenario --user-name admin --password password --display-errors --url "amqp://admin:password@clientid/${SERVER_ADDRESS}?brokerlist='tcp://${SERVER_ADDRESS}:5672'" "${REPORTS_HOME}/${SERVER_NAME}.json"
 
 # Create a report.
