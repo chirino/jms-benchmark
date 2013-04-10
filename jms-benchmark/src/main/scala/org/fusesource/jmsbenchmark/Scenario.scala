@@ -20,7 +20,7 @@ package org.fusesource.jmsbenchmark
 import java.util.concurrent.atomic._
 import java.util.concurrent.TimeUnit._
 import scala.collection.mutable.ListBuffer
-import java.util.concurrent.{TimeoutException, CyclicBarrier}
+import java.util.concurrent.{CountDownLatch, BrokenBarrierException, TimeoutException, CyclicBarrier}
 
 case class DataSample(time:Long, produced:Long, consumed:Long, errors:Long, max_latency:Long)
 
@@ -232,7 +232,8 @@ trait Scenario {
   var producer_clients = List[Client]()
   var consumer_clients = List[Client]()
 
-  var startup_barrier:CyclicBarrier = null
+  var connected_latch:CountDownLatch = null
+  var apply_load_latch:CountDownLatch = null
 
   def with_load[T](func: =>T ):T = {
     var i = 0
@@ -252,7 +253,8 @@ trait Scenario {
     _producer_sleep.init(System.currentTimeMillis())
     _consumer_sleep.init(System.currentTimeMillis())
 
-    startup_barrier = new CyclicBarrier(producers + consumers + 1);
+    connected_latch = new CountDownLatch(producers + consumers);
+    apply_load_latch = new CountDownLatch(1);
 
     for (i <- 0 until producers) {
       val client = createProducer(i)
@@ -267,25 +269,21 @@ trait Scenario {
     }
 
     try {
-      def all_connected(timeout:Long) = {
-        try {
-          startup_barrier.await(timeout, MILLISECONDS)
-          true
-        } catch {
-          case e:TimeoutException => false
+      var timeout = 0L
+      var done_connect = false
+      while( !done_connect ) {
+        if ( connected_latch.await(timeout, MILLISECONDS) ) {
+          done_connect = true
+          apply_load_latch.countDown();
+        }  else {
+          timeout = continue_connecting
+          if ( timeout <= 0 ) {
+            apply_load_latch.countDown();
+            done.set(true)
+            throw new TimeoutException("All clients could not connect.  Failing connections: "+connected_latch.getCount);
+          }
         }
       }
-
-      var timeout = continue_connecting
-      while( timeout > 0 && !all_connected(timeout) ) {
-        timeout = continue_connecting
-      }
-
-      val connected = startup_barrier.getNumberWaiting
-      done.set(true)
-      startup_barrier.reset()
-      throw new TimeoutException("All clients could not connect.  Successful connections: "+connected);
-      startup_barrier = null
       func
     } finally {
       done.set(true)

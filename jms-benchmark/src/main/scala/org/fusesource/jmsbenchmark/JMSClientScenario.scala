@@ -185,8 +185,11 @@ abstract class JMSClientScenario extends Scenario {
         session.createConsumer(destination(id), selector, no_local)
       }
 
-      if ( startup_barrier !=null ) {
-        startup_barrier.await()
+      if ( connected_latch !=null ) {
+        connected_latch.countDown()
+      }
+      if ( apply_load_latch !=null ) {
+        apply_load_latch.await()
       }
 
       var tx_counter = 0
@@ -250,8 +253,11 @@ abstract class JMSClientScenario extends Scenario {
         msg.setStringProperty(key, value)
       }
 
-      if ( startup_barrier !=null ) {
-        startup_barrier.await()
+      if ( connected_latch !=null ) {
+        connected_latch.countDown()
+      }
+      if ( apply_load_latch !=null ) {
+        apply_load_latch.await()
       }
 
       var tx_counter = 0
