@@ -25,6 +25,7 @@ import collection.JavaConversions
 import java.lang.{String, Class}
 import org.apache.felix.gogo.commands.{Option => option, Argument => argument, Command => command, CommandException, Action}
 import org.apache.felix.service.command.CommandSession
+import java.util.concurrent.TimeoutException
 
 object Benchmark {
   def main(args: Array[String]):Unit = {
@@ -203,9 +204,18 @@ class Benchmark extends Action {
     def with_load[T](s:List[Scenario])(proc: => T):T = {
       s.headOption match {
         case Some(senario) =>
-          senario.with_load {
+          var i = 0
+          senario.with_load_and_connect_timeout {
             with_load(s.drop(1)) {
               proc
+            }
+          } {
+            i += 1
+            if( i <= 10 ) {
+              print("c")
+              1000L
+            } else {
+              0L
             }
           }
         case None =>
@@ -214,46 +224,51 @@ class Benchmark extends Action {
     }
 
     Thread.currentThread.setPriority(Thread.MAX_PRIORITY)
-    val sample_set = with_load(scenarios) {
-      for( i <- 0 until warm_up_count ) {
-        Thread.sleep(sample_interval)
-        print(".")
-      }
-      scenarios.foreach(_.collection_start)
-
-      if( is_done!=null ) {
-        while( !is_done(scenarios) ) {
-          print(".")
+    try {
+      val sample_set = with_load(scenarios) {
+        for (i <- 0 until warm_up_count) {
           Thread.sleep(sample_interval)
-          scenarios.foreach(_.collection_sample)
-        }
-
-      } else {
-        var remaining = sc
-        while( remaining > 0 ) {
           print(".")
-          Thread.sleep(sample_interval)
-          scenarios.foreach(_.collection_sample)
-          remaining-=1
         }
-      }
+        scenarios.foreach(_.collection_start)
+
+        if (is_done != null) {
+          while (!is_done(scenarios)) {
+            print(".")
+            Thread.sleep(sample_interval)
+            scenarios.foreach(_.collection_sample)
+          }
+
+        } else {
+          var remaining = sc
+          while (remaining > 0) {
+            print(".")
+            Thread.sleep(sample_interval)
+            scenarios.foreach(_.collection_sample)
+            remaining -= 1
+          }
+        }
 
 
-      println(".")
-      scenarios.foreach{ scenario=>
-        val collected = scenario.collection_end
-        if( collected.find( _.produced != 0 ).isDefined ) {
-          println("producer throughput samples : %s".format(json_format(collected.map(_.produced) )) )
+        println(".")
+        scenarios.foreach {
+          scenario =>
+            val collected = scenario.collection_end
+            if (collected.find(_.produced != 0).isDefined) {
+              println("producer throughput samples : %s".format(json_format(collected.map(_.produced))))
+            }
+            if (collected.find(_.consumed != 0).isDefined) {
+              println("consumer throughput samples : %s".format(json_format(collected.map(_.consumed))))
+              println("consumer max latency samples: %s".format(json_format(collected.map(x => "%.3f ms".format(x.max_latency / 1000000.0)))))
+            }
+            if (collected.find(_.errors != 0).isDefined) {
+              println("errors                      : %s".format(json_format(collected.map(_.errors))))
+            }
+            samples.put(scenario.name, collected)
         }
-        if( collected.find( _.consumed != 0 ).isDefined ) {
-          println("consumer throughput samples : %s".format(json_format(collected.map(_.consumed) )) )
-          println("consumer max latency samples: %s".format(json_format(collected.map(x => "%.3f ms".format(x.max_latency / 1000000.0)) )) )
-        }
-        if( collected.find( _.errors != 0 ).isDefined ) {
-          println("errors                      : %s".format(json_format(collected.map(_.errors) )) )
-        }
-        samples.put(scenario.name, collected)
       }
+    } catch {
+      case e:TimeoutException => println(e.getMessage)
     }
     Thread.currentThread.setPriority(Thread.NORM_PRIORITY)
 

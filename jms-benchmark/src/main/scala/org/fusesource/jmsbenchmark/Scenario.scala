@@ -20,6 +20,7 @@ package org.fusesource.jmsbenchmark
 import java.util.concurrent.atomic._
 import java.util.concurrent.TimeUnit._
 import scala.collection.mutable.ListBuffer
+import java.util.concurrent.{TimeoutException, CyclicBarrier}
 
 case class DataSample(time:Long, produced:Long, consumed:Long, errors:Long, max_latency:Long)
 
@@ -231,11 +232,27 @@ trait Scenario {
   var producer_clients = List[Client]()
   var consumer_clients = List[Client]()
 
+  var startup_barrier:CyclicBarrier = null
+
   def with_load[T](func: =>T ):T = {
+    var i = 0
+    with_load_and_connect_timeout(func) {
+      i += 1
+      if( i <= 10 ) {
+        1000L
+      } else {
+        0L
+      }
+    }
+  }
+
+  def with_load_and_connect_timeout[T](func: =>T)(continue_connecting: =>Long):T = {
     done.set(false)
 
     _producer_sleep.init(System.currentTimeMillis())
     _consumer_sleep.init(System.currentTimeMillis())
+
+    startup_barrier = new CyclicBarrier(producers + consumers + 1);
 
     for (i <- 0 until producers) {
       val client = createProducer(i)
@@ -250,6 +267,25 @@ trait Scenario {
     }
 
     try {
+      def all_connected(timeout:Long) = {
+        try {
+          startup_barrier.await(timeout, MILLISECONDS)
+          true
+        } catch {
+          case e:TimeoutException => false
+        }
+      }
+
+      var timeout = continue_connecting
+      while( timeout > 0 && !all_connected(timeout) ) {
+        timeout = continue_connecting
+      }
+
+      val connected = startup_barrier.getNumberWaiting
+      done.set(true)
+      startup_barrier.reset()
+      throw new TimeoutException("All clients could not connect.  Successful connections: "+connected);
+      startup_barrier = null
       func
     } finally {
       done.set(true)

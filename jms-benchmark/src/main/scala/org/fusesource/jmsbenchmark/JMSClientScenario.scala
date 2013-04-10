@@ -20,6 +20,7 @@ package org.fusesource.jmsbenchmark
 import java.lang.Thread
 import javax.jms._
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.CyclicBarrier
 
 /**
  * <p>
@@ -184,6 +185,10 @@ abstract class JMSClientScenario extends Scenario {
         session.createConsumer(destination(id), selector, no_local)
       }
 
+      if ( startup_barrier !=null ) {
+        startup_barrier.await()
+      }
+
       var tx_counter = 0
       while( !done.get() ) {
         val msg = consumer.receive(500)
@@ -243,6 +248,10 @@ abstract class JMSClientScenario extends Scenario {
       val msg = session.createTextMessage(body(name))
       headers_for(id).foreach { case (key, value) =>
         msg.setStringProperty(key, value)
+      }
+
+      if ( startup_barrier !=null ) {
+        startup_barrier.await()
       }
 
       var tx_counter = 0
