@@ -68,43 +68,8 @@ abstract class JMSClientScenario extends Scenario {
     var message_counter=0L
     val done = new AtomicBoolean()
 
-    var worker = new Thread(name+" worker") {
-      override def run() {
-        var reconnect_delay = 0
-        while( !done.get ) {
-          try {
+    var worker:Thread = _
 
-            if( reconnect_delay!=0 ) {
-              Thread.sleep(reconnect_delay)
-              reconnect_delay=0
-            }
-            connection = factory.createConnection(user_name, password)
-            if( durable ) {
-              connection.setClientID(name)
-            }
-            connection.setExceptionListener(new ExceptionListener {
-              def onException(exception: JMSException) {
-              }
-            })
-            connection.start()
-
-            execute
-
-          } catch {
-            case e:Throwable =>
-              if( !done.get ) {
-                if( display_errors ) {
-                  e.printStackTrace
-                }
-                error_counter.incrementAndGet
-                reconnect_delay = 1000
-              }
-          } finally {
-            dispose
-          }
-        }
-      }
-    }
     var close_thread:Thread = null
     def dispose {
       if( close_thread==null ) {
@@ -124,6 +89,43 @@ abstract class JMSClientScenario extends Scenario {
     def execute:Unit
 
     def start = {
+      worker = new Thread(name+" worker") {
+        override def run() {
+          var reconnect_delay = 0
+          while( !done.get ) {
+            try {
+
+              if( reconnect_delay!=0 ) {
+                Thread.sleep(reconnect_delay)
+                reconnect_delay=0
+              }
+              connection = factory.createConnection(user_name, password)
+              if( durable ) {
+                connection.setClientID(name)
+              }
+              connection.setExceptionListener(new ExceptionListener {
+                def onException(exception: JMSException) {
+                }
+              })
+              connection.start()
+
+              execute
+
+            } catch {
+              case e:Throwable =>
+                if( !done.get ) {
+                  if( display_errors ) {
+                    e.printStackTrace
+                  }
+                  error_counter.incrementAndGet
+                  reconnect_delay = 1000
+                }
+            } finally {
+              dispose
+            }
+          }
+        }
+      }
       worker.start
     }
 
@@ -170,7 +172,7 @@ abstract class JMSClientScenario extends Scenario {
   }
 
   class ConsumerClient(override val id: Int) extends JMSClient {
-    val name: String = "consumer " + id
+    def name = "consumer " + id
 
     def execute {
       var session = if(tx_size==0) {
@@ -231,7 +233,7 @@ abstract class JMSClientScenario extends Scenario {
 
   class ProducerClient(override val id: Int) extends JMSClient {
 
-    val name: String = "producer " + id
+    def name = "producer " + id
 
     def execute {
 
