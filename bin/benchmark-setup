@@ -1,6 +1,7 @@
 #!/bin/bash
 
 true \
+${BENCHMARK_ARGS:=} \
 ${BENCHMARK_JVM_OPTS:=-server -Xmx2G} \
 ${REPORTS_HOME:=$1} \
 ${PLATFORM:=`hostname`} \
@@ -10,7 +11,7 @@ WORKSPACE="${BASEDIR}/workspace"
 function benchmark {
   echo CLASSPATH=${CLASSPATH}
   echo java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark $*
-  java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark $*
+  java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark ${BENCHMARK_ARGS} $*
 }
 
 mkdir -p ${WORKSPACE}
