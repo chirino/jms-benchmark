@@ -38,6 +38,12 @@
       <version>1.1</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+       <groupId>org.ocpsoft.prettytime</groupId>
+       <artifactId>prettytime</artifactId>
+       <version>2.1.2.Final</version>
+    </dependency>
+
   </dependencies>
 
 </project>

@@ -26,6 +26,8 @@ import java.lang.{String, Class}
 import org.apache.felix.gogo.commands.{Option => option, Argument => argument, Command => command, CommandException, Action}
 import org.apache.felix.service.command.CommandSession
 import java.util.concurrent.TimeoutException
+import org.ocpsoft.prettytime.PrettyTime
+import java.util.Date
 
 object Benchmark {
   def main(args: Array[String]):Unit = {
@@ -227,11 +229,10 @@ class Benchmark extends Action {
     try {
       val sample_set = with_load(scenarios) {
         for (i <- 0 until warm_up_count) {
+          print("w")
           Thread.sleep(sample_interval)
-          print(".")
         }
         scenarios.foreach(_.collection_start)
-
         if (is_done != null) {
           while (!is_done(scenarios)) {
             print(".")
@@ -249,8 +250,7 @@ class Benchmark extends Action {
           }
         }
 
-
-        println(".")
+        println("")
         scenarios.foreach {
           scenario =>
             val collected = scenario.collection_end
@@ -281,6 +281,8 @@ class Benchmark extends Action {
   def run_benchmarks:Unit = {
 
     val scenarios_to_skip = Set(skip.split(",").map(_.trim):_* )
+    case class ScenarioDescription(name:String, execute:()=>Unit, duration:Int=(((sample_count+warm_up_count+2)*sample_interval)+2000))
+    var descriptions = List[ScenarioDescription]()
 
     // Load up a queue for 30 seconds..
     val load_unload_samples = 60
@@ -299,46 +301,48 @@ class Benchmark extends Action {
         println("skipping  : "+name)
         println("   reason : "+skip)
       } else {
-        benchmark(name, sc=load_unload_samples) { g=>
-          g.destination_type = "queue"
-          g.persistent = persistent
-          g.ack_mode = "auto"
-          g.message_size = 10
-          g.tx_size = 0
-          g.producers = 10
-          g.consumers = 10
+        descriptions ::= ScenarioDescription(name, ()=>{
+          benchmark(name, sc=load_unload_samples) { g=>
+            g.destination_type = "queue"
+            g.persistent = persistent
+            g.ack_mode = "auto"
+            g.message_size = 10
+            g.tx_size = 0
+            g.producers = 10
+            g.consumers = 10
 
-          // producer will sleep midway..
-          g._producer_sleep = new SleepFn {
-            var start = 0L
-            def init(time: Long) { start = time }
-            def apply(client:Scenario#Client) = {
-              val elapsed = System.currentTimeMillis() - start
-              val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
-              if (elapsed > midpoint ) {
-                client.shutdown()
-                0
-              } else {
-                0
+            // producer will sleep midway..
+            g._producer_sleep = new SleepFn {
+              var start = 0L
+              def init(time: Long) { start = time }
+              def apply(client:Scenario#Client) = {
+                val elapsed = System.currentTimeMillis() - start
+                val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
+                if (elapsed > midpoint ) {
+                  client.shutdown()
+                  0
+                } else {
+                  0
+                }
+              }
+            }
+
+            // consumer will sleep until midway through the scenario.
+            g._consumer_sleep = new SleepFn {
+              var start = 0L
+              def init(time: Long) { start = time }
+              def apply(client:Scenario#Client) = {
+                val elapsed = System.currentTimeMillis() - start
+                val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
+                if (elapsed <  midpoint ) {
+                  midpoint - elapsed
+                } else {
+                  0
+                }
               }
             }
           }
-
-          // consumer will sleep until midway through the scenario.
-          g._consumer_sleep = new SleepFn {
-            var start = 0L
-            def init(time: Long) { start = time }
-            def apply(client:Scenario#Client) = {
-              val elapsed = System.currentTimeMillis() - start
-              val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
-              if (elapsed <  midpoint ) {
-                midpoint - elapsed
-              } else {
-                0
-              }
-            }
-          }
-        }
+        }, ((load_unload_samples+warm_up_count)*sample_interval)+2000 )
       }
     }
 
@@ -380,18 +384,19 @@ class Benchmark extends Action {
         println("skipping  : "+name)
         println("   reason : "+skip)
       } else {
-
-        benchmark(name) { g=>
-          g.destination_type = mode
-          g.persistent = persistent
-          g.durable == persistent && mode == "topic"
-          g.ack_mode = if ( persistent ) "client" else "auto"
-          g.message_size = message_size
-          g.tx_size = tx_size
-          g.destination_count = destination_count
-          g.consumers = consumers
-          g.producers = producers
-        }
+        descriptions ::= ScenarioDescription(name, ()=>{
+          benchmark(name) { g=>
+            g.destination_type = mode
+            g.persistent = persistent
+            g.durable == persistent && mode == "topic"
+            g.ack_mode = if ( persistent ) "client" else "auto"
+            g.message_size = message_size
+            g.tx_size = tx_size
+            g.destination_count = destination_count
+            g.consumers = consumers
+            g.producers = producers
+          }
+        })
       }
     }
 
@@ -410,27 +415,41 @@ class Benchmark extends Action {
         println("skipping  : "+name)
         println("   reason : "+skip)
       } else {
-        benchmark(name) { g=>
-          g.destination_type = mode
-          g.persistent = persistent
-          g.durable == persistent && mode == "topic"
-          g.ack_mode = if ( persistent ) "client" else "auto"
-          g.message_size = 10
-          g.producers = 1
-          g.consumers = 10
-          g._consumer_sleep = new SleepFn{
-            def apply(client:Scenario#Client) = {
-              // the client /w id 2 will be the slow one.
-              if ( client.id == 2 )  {
-                500
-              } else {
-                0
+        descriptions ::= ScenarioDescription(name, ()=>{
+          benchmark(name) { g=>
+            g.destination_type = mode
+            g.persistent = persistent
+            g.durable == persistent && mode == "topic"
+            g.ack_mode = if ( persistent ) "client" else "auto"
+            g.message_size = 10
+            g.producers = 1
+            g.consumers = 10
+            g._consumer_sleep = new SleepFn{
+              def apply(client:Scenario#Client) = {
+                // the client /w id 2 will be the slow one.
+                if ( client.id == 2 )  {
+                  500
+                } else {
+                  0
+                }
               }
+              def init(time: Long) {}
             }
-            def init(time: Long) {}
           }
-        }
+        })
       }
     }
+
+    var remaining = descriptions.size
+    var timeRemaining = descriptions.foldLeft(0){case (x,y)=> (x+y.duration)}
+    val pretty_time = new PrettyTime();
+    for ( description <- descriptions ) {
+      println()
+      println("%d scenarios remaining. Estimating completion at: %s.".format(remaining, pretty_time.format(new Date(System.currentTimeMillis()+(timeRemaining)))))
+      description.execute()
+      remaining -= 1
+      timeRemaining -= description.duration
+    }
+
   }
 }
