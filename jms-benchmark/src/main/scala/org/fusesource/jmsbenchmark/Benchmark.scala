@@ -17,7 +17,7 @@
  */
 package org.fusesource.jmsbenchmark
 
-import scala.collection.mutable.HashMap
+import collection.mutable.{ListBuffer, HashMap}
 
 import java.io.{PrintStream, FileOutputStream, File}
 import org.apache.felix.gogo.commands.basic.DefaultActionPreparator
@@ -98,8 +98,14 @@ class Benchmark extends Action {
   @option(name = "--allow_worker_interrupt", description = "Should worker threads get interrupted if they fail to shutdown quickly?")
   var allow_worker_interrupt = false
 
-  @option(name = "--skip", description = "Comma seperated list of tests to skip.")
+  @option(name = "--skip", description = "Comma separated list of tests to skip.")
   var skip = ""
+
+  @option(name = "--max-clients", description = "Max number of clients to run in parallel")
+  var max_clients = 200
+
+  @option(name = "--show-skips", description = "Should skipped scenarios be displayed.")
+  var show_skips = false
 
   var samples = HashMap[String, List[DataSample]]()
 
@@ -282,7 +288,7 @@ class Benchmark extends Action {
 
     val scenarios_to_skip = Set(skip.split(",").map(_.trim):_* )
     case class ScenarioDescription(name:String, execute:()=>Unit, duration:Int=(((sample_count+warm_up_count+2)*sample_interval)+2000))
-    var descriptions = List[ScenarioDescription]()
+    val descriptions = ListBuffer[ScenarioDescription]()
 
     // Load up a queue for 30 seconds..
     val load_unload_samples = 60
@@ -297,11 +303,13 @@ class Benchmark extends Action {
 
       val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
       if ( skip!=null ) {
-        println()
-        println("skipping  : "+name)
-        println("   reason : "+skip)
+        if ( show_skips ) {
+          println()
+          println("skipping  : "+name)
+          println("   reason : "+skip)
+        }
       } else {
-        descriptions ::= ScenarioDescription(name, ()=>{
+        descriptions += ScenarioDescription(name, ()=>{
           benchmark(name, sc=load_unload_samples) { g=>
             g.destination_type = "queue"
             g.persistent = persistent
@@ -346,12 +354,17 @@ class Benchmark extends Action {
       }
     }
 
+    var client_counts = List(1)
+    while( (client_counts.head*10) < max_clients ) {
+      client_counts ::= (client_counts.head * 10)
+    }
+
     for(
       mode <- Array("queue", "topic") ;
       persistent <- Array(true, false) ;
       selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-      consumers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000) ;
-      producers <- Array(1000, 100, 10, 1) ; // Array(1, 10, 100, 1000, 10000)
+      consumers <- client_counts;
+      producers <- client_counts;
       message_size <- Array(10000000, 100000, 1000, 100, 10) ;
       tx_size <- Array(100, 10, 1, 0) ;
       destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
@@ -364,6 +377,9 @@ class Benchmark extends Action {
       // Skip on odds scenario combinations like more destinations than clients.
       else if ( (consumers<destination_count) || (producers<destination_count) ) {
         skip = "more destinations than clients"
+      }
+      else if ( consumers+producers > max_clients ) {
+        skip = "--max-clients exceeded"
       }
       // When using lots of clients, only test against small txs and small messages.
       else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
@@ -380,11 +396,13 @@ class Benchmark extends Action {
 
       val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
       if ( skip!=null ) {
-        println()
-        println("skipping  : "+name)
-        println("   reason : "+skip)
+        if ( show_skips ) {
+          println()
+          println("skipping  : "+name)
+          println("   reason : "+skip)
+        }
       } else {
-        descriptions ::= ScenarioDescription(name, ()=>{
+        descriptions += ScenarioDescription(name, ()=>{
           benchmark(name) { g=>
             g.destination_type = mode
             g.persistent = persistent
@@ -411,11 +429,13 @@ class Benchmark extends Action {
 
       val name = """ "group": "slow_consumer", "mode": "%s", "persistent": %s """.format(mode, persistent)
       if ( skip!=null ) {
-        println()
-        println("skipping  : "+name)
-        println("   reason : "+skip)
+        if ( show_skips ) {
+          println()
+          println("skipping  : "+name)
+          println("   reason : "+skip)
+        }
       } else {
-        descriptions ::= ScenarioDescription(name, ()=>{
+        descriptions += ScenarioDescription(name, ()=>{
           benchmark(name) { g=>
             g.destination_type = mode
             g.persistent = persistent
