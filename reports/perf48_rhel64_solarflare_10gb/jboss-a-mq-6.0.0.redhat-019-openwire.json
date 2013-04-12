@@ -1,6 +1,6 @@
 {
   "benchmark_settings": {
-    "broker_name": "activemq-5.8.0-openwire",
+    "broker_name": "jboss-a-mq-6.0.0.redhat-019-openwire",
     "url": "tcp://192.168.10.48:61616",
     "sample_count": 15,
     "sample_interval": 1000,

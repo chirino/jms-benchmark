@@ -1,4 +1,4 @@
 {
-  "platforms":["perf46.lab.bos.redhat.com", "reports_active_mq_1", "reports_active_mq_2"],
-  "products":["activemq-5.8.0-openwire", "apollo-1.5-openwire"]
+  "platforms":["perf48_rhel64_solarflare_10gb", "perf80_rhel64"],
+  "products":["jboss-a-mq-6.0.0.redhat-019-openwire", "jboss-a-mq-6.0.0.redhat-019-openwire-numad_on", "qpid-cpp-server-0.18-14"]
 }
