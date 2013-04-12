@@ -23,14 +23,16 @@ import org.apache.qpid.jms.ConnectionURL
 
 object QpidScenario {
   def main(args:Array[String]):Unit = {
-    val scenario = new QpidScenario
-    scenario.url = "tcp://localhost:5672"
-    scenario.user_name = "guest"
-    scenario.password = "guest"
+    val scenario = new org.fusesource.jmsbenchmark.QpidScenario
+    scenario.url = "amqp://admin:password@clientid/192.168.124.147?brokerlist='tcp://192.168.124.147:5672'"
+    scenario.user_name = "admin"
+    scenario.password = "password"
     scenario.display_errors = true
-    scenario.message_size = 20
-    scenario.destination_type = "queue"
-    scenario.consumers = 1
+    scenario.message_size = 10
+    scenario.destination_type = "topic"
+    scenario.producers = 1
+    scenario.consumers = 10
+    scenario.producer_sleep_=(1000)
     scenario.run()
   }
 }
@@ -55,9 +57,9 @@ class QpidScenario extends JMSClientScenario {
 
   override protected def destination(i:Int):Destination = destination_type match {
     case "queue" =>
-      new AMQQueue("qload_"+i+";{create:always,node:{durable:true}}")
+      new AMQQueue(indexed_destination_name(i)+";{create:always,node:{durable:true}}")
     case "topic" =>
-      new AMQTopic("amq.topic/tload"+i+"/sub")
+      new AMQTopic("amq.topic/"+indexed_destination_name(i))
     case _ =>
       sys.error("Unsuported destination type: "+destination_type)
   }
