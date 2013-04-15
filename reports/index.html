@@ -15,15 +15,16 @@
   <script src="js/libs/jquery.flot.crosshair.js"></script> 
   <script src="js/libs/jquery.flot.boxwhisker.js"></script> 
   <script src="js/libs/handlebars-1.0.0-rc.3.js"></script>
-  <script src="js/libs/ember-1.0.0-rc.1.js"></script>
+  <script src="js/libs/ember-1.0.0-rc.2.js"></script>
+  <script src="js/libs/ember-bootstrap-0.0.1.js"></script>
   <script src="js/libs/psMathStats.js"></script>
   <script src="js/app.js"></script>
   
-  <title>Benchmark Results</title>
-  
+  <title>JMS Benchmark Reports</title>
 <head>
 <body>
 <script type="text/x-handlebars" data-template-name="index">
+{{#with App.MainController}}
 <div class="navbar navbar-fixed-top">
   <div class="navbar-inner">
     <div class="container">
@@ -33,7 +34,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </a>
-      <a class="brand">Benchmarks</a>
+      <a class="brand">JMS Benchmark Reports</a>
 
       <div class="nav-collapse" id="main-menu">
         <!--
@@ -49,93 +50,106 @@
     </div>
   </div>
 </div>
-
 <div class="container" style="padding-top:62px;">
   <div class="row">
-  
-    <div class="span3">
-      <div class="well">
-      <h2 style="margin:0">Show</h2>
-      <div style="padding:.5em">
-        <strong>style:</strong>
-        <div style="padding:.5em">
-          <label>
-            {{view Ember.Checkbox checkedBinding="App.BenchmarksController.box_wisker"}}
-            Box and Wisker Plot
-          </label>  
-        </div>
-        <strong>benchmarks against:</strong>
-        <div style="padding:.5em">
-        {{#each item in App.BenchmarksController.benchmarks_by_platform}}
-          <label>
-            <strong>{{item.key}}:</strong>
-            <div style="padding:.5em">
-            {{#each item in item.values}}
-              <label>
-                {{view Ember.Checkbox checkedBinding="item.show"}}
-                {{item.benchmark_settings.broker_name}}
-              </label>  
-            {{/each}}
-            </div>
-          </label>  
-        {{/each}}
-        </div>
-        <strong>metrics:</strong>
-        <div style="padding:.5em">
-          <label>
-            {{view Ember.Checkbox checkedBinding="App.BenchmarksController.show_producer_tp"}}
-            Producer Throughput
-          </label>  
-          <label>
-            {{view Ember.Checkbox checkedBinding="App.BenchmarksController.show_consumer_tp"}}
-            Consumer Throughput
-          </label>  
-          <label>
-            {{view Ember.Checkbox checkedBinding="App.BenchmarksController.show_max_latency"}}
-            Max Latency
-          </label>  
-          <label>
-            {{view Ember.Checkbox checkedBinding="App.BenchmarksController.show_errors"}}
-            Errors
-          </label>  
-        </div>
-      </div>
-      <hr>
-      <h2 style="margin:0">Filter By</h2>
-      <div style="padding:.5em">
-      {{#each parameter in App.BenchmarksController.parameters_by_key}}
-        <strong>{{parameter.key}}:</strong>
-        <div style="padding:.5em">
-        {{#each value in parameter.values}}
-        <label>
-          {{view Ember.Checkbox checkedBinding="value.show"}}
-          {{value.label}}
-        </label>  
-        {{/each}}
-        </div>
-      {{/each}}
-      </div>
-      </div>
+    <div class="span12">
+      {{view view.Bootstrap.Tabs contentBinding="tabs" selectionBinding="selected_tab"}}
     </div>
-    <div class="span9">
-      {{#each scenario in App.BenchmarksController.matching_scenarios}}
-      <div class="row">
-        <div class="span3">
-          <div class="well">
-            <label style="margin:0; font-size:90%"><strong>metric:</strong> {{scenario.metrics}}</label>
-            {{#each entry in scenario.parameters}}
-            <label style="margin:0; font-size:90%"><strong>{{entry.key}}:</strong> {{entry.value}}</label>
-            {{/each}}
+  </div>  
+  {{#if tab_selected_scenarios}}
+    {{#with App.ScenariosController}}
+    <div class="row">
+      <div class="span3">
+        <div class="well">
+        <h2 style="margin:0">Show</h2>
+        <div style="padding:.5em">
+          <strong>style:</strong>
+          <div style="padding:.5em">
+            <label>
+              {{view Ember.Checkbox checkedBinding="box_wisker"}}
+              Box and Wisker Plot
+            </label>  
+          </div>
+          <strong>benchmarks against:</strong>
+          <div style="padding:.5em">
+          {{#each item in benchmarks_by_platform}}
+            <label>
+              <strong>{{item.key}}:</strong>
+              <div style="padding:.5em">
+              {{#each item in item.values}}
+                <label>
+                  {{view Ember.Checkbox checkedBinding="item.show"}}
+                  {{item.benchmark_settings.broker_name}}
+                </label>  
+              {{/each}}
+              </div>
+            </label>  
+          {{/each}}
+          </div>
+          <strong>metrics:</strong>
+          <div style="padding:.5em">
+            <label>
+              {{view Ember.Checkbox checkedBinding="show_producer_tp"}}
+              Producer Throughput
+            </label>  
+            <label>
+              {{view Ember.Checkbox checkedBinding="show_consumer_tp"}}
+              Consumer Throughput
+            </label>  
+            <label>
+              {{view Ember.Checkbox checkedBinding="show_max_latency"}}
+              Max Latency
+            </label>  
+            <label>
+              {{view Ember.Checkbox checkedBinding="show_errors"}}
+              Errors
+            </label>  
           </div>
         </div>
-        <div class="span6">
-        {{view App.Chart contentBinding="scenario" box_wiskerBinding="App.BenchmarksController.box_wisker"}}
+        <hr>
+        <h2 style="margin:0">Filter By</h2>
+        <div style="padding:.5em">
+        {{#each parameter in parameters_by_key}}
+          <strong>{{parameter.key}}:</strong>
+          <div style="padding:.5em">
+          {{#each value in parameter.values}}
+          <label>
+            {{view Ember.Checkbox checkedBinding="value.show"}}
+            {{value.label}}
+          </label>  
+          {{/each}}
+          </div>
+        {{/each}}
+        </div>
         </div>
       </div>
-      {{/each}}
+      <div class="span9">
+        {{#each scenario in matching_scenarios}}
+        <div class="row">
+          <div class="span3">
+            <div class="well">
+              <label style="margin:0; font-size:90%"><strong>metric:</strong> {{scenario.metrics}}</label>
+              {{#each entry in scenario.parameters}}
+              <label style="margin:0; font-size:90%"><strong>{{entry.key}}:</strong> {{entry.value}}</label>
+              {{/each}}
+            </div>
+          </div>
+          <div class="span6">
+          {{view App.Chart contentBinding="scenario" box_wiskerBinding="App.ScenariosController.box_wisker"}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
     </div>
+    {{/with}}
+  {{/if}}
+  {{#if tab_selected_trends}}
+  <div class="span12" >
+    ... comming soon ...
   </div>
-</div>  
+  {{/if}}
+</div>
+{{/with}}
+</script>
 </body>
-</script>  
 </html>

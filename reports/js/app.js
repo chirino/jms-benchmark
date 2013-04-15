@@ -41,7 +41,18 @@ App = Ember.Application.create({
 
 });
 
-App.BenchmarksController = Em.ArrayController.extend({
+App.MainController = Ember.Controller.extend({
+  tabs:["Scenarios","Trends"],
+  selected_tab:"Scenarios",
+  tab_selected_scenarios:function() {
+    return this.get("selected_tab") == "Scenarios"
+  }.property("selected_tab"),
+  tab_selected_trends:function() {
+    return this.get("selected_tab") == "Trends"
+  }.property("selected_tab"),
+}).create();
+
+App.ScenariosController = Ember.ArrayController.extend({
   content: [],
   parameters:[],
   show_producer_tp:true,
@@ -364,7 +375,7 @@ $.ajax({ url: "index.json", dataType:"json",
             data.show = true;
             data.platform = platform;
             data.platform_description = platform_description;
-            App.BenchmarksController.get('content').pushObject(data);
+            App.ScenariosController.get('content').pushObject(data);
           }});
         });
       };
