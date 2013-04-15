@@ -10,14 +10,16 @@ import javax.management.openmbean.CompositeData
 object ActiveMQScenario {
   def main(args:Array[String]):Unit = {
     val scenario = new ActiveMQScenario
-    scenario.url = "tcp://localhost:61613"
+    scenario.url = "tcp://mac-pro:61613"
     scenario.display_errors = true
     scenario.user_name = "admin"
     scenario.password = "password"
-    scenario.message_size = 20
-    scenario.producers = 1
+    scenario.message_size = 1000
+    scenario.producers = 100
     scenario.consumers = 100
-    scenario.destination_type = "topic"
+    scenario.persistent = true
+    scenario.tx_size = 10
+    scenario.destination_type = "queue"
     scenario.run()
   }
 }

@@ -61,6 +61,15 @@ abstract class JMSClientScenario extends Scenario {
     }
   }
 
+  def load_start_rendezvous(client:JMSClient, session:Session) = {
+    if ( connected_latch !=null ) {
+      connected_latch.countDown()
+    }
+    if ( apply_load_latch !=null ) {
+      apply_load_latch.await()
+    }
+  }
+
   trait JMSClient extends Client {
 
     @volatile
@@ -187,12 +196,7 @@ abstract class JMSClientScenario extends Scenario {
         session.createConsumer(destination(id), selector, no_local)
       }
 
-      if ( connected_latch !=null ) {
-        connected_latch.countDown()
-      }
-      if ( apply_load_latch !=null ) {
-        apply_load_latch.await()
-      }
+      load_start_rendezvous(this, session)
 
       var tx_counter = 0
       while( !done.get() ) {
@@ -255,12 +259,7 @@ abstract class JMSClientScenario extends Scenario {
         msg.setStringProperty(key, value)
       }
 
-      if ( connected_latch !=null ) {
-        connected_latch.countDown()
-      }
-      if ( apply_load_latch !=null ) {
-        apply_load_latch.await()
-      }
+      load_start_rendezvous(this, session)
 
       var tx_counter = 0
       while( !done.get() ) {

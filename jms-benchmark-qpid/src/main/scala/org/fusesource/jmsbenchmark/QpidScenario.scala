@@ -17,7 +17,7 @@
  */
 package org.fusesource.jmsbenchmark
 
-import javax.jms.{Destination, ConnectionFactory}
+import javax.jms.{Session, Destination, ConnectionFactory}
 import org.apache.qpid.client._
 import org.apache.qpid.jms.ConnectionURL
 
@@ -62,6 +62,12 @@ class QpidScenario extends JMSClientScenario {
       new AMQTopic("amq.topic/"+indexed_destination_name(i))
     case _ =>
       sys.error("Unsuported destination type: "+destination_type)
+  }
+
+  override def load_start_rendezvous(client: JMSClient, session: Session) {
+    // add code here that executes before scenario load starts getting applied.
+    super.load_start_rendezvous(client, session)
+    // add code here that executes after scenario load starts getting applied.
   }
 
 }
