@@ -104,6 +104,9 @@ class Benchmark extends Action {
   @option(name = "--max-clients", description = "Max number of clients to run in parallel")
   var max_clients = 200
 
+  @option(name = "--max-destinations", description = "Max number of destinations to use")
+  var max_destinations = 100
+
   @option(name = "--show-skips", description = "Should skipped scenarios be displayed.")
   var show_skips = false
 
@@ -359,6 +362,11 @@ class Benchmark extends Action {
       client_counts ::= (client_counts.head * 10)
     }
 
+    var destinations_counts = List(1)
+    while( (destinations_counts.head*10) < max_destinations ) {
+      destinations_counts ::= (destinations_counts.head * 10)
+    }
+
     for(
       mode <- Array("queue", "topic") ;
       persistent <- Array(true, false) ;
@@ -367,7 +375,7 @@ class Benchmark extends Action {
       producers <- client_counts;
       message_size <- Array(10000000, 100000, 1000, 100, 10) ;
       tx_size <- Array(100, 10, 1, 0) ;
-      destination_count <- Array(1, 10, 100, 1000)  // Array(1, 10, 100, 1000, 10000) ;
+      destination_count <- destinations_counts
     ) {
 
       var skip:String = null
