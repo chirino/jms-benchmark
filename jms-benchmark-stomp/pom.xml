@@ -38,7 +38,7 @@
     <benchmark-options></benchmark-options>
     <box>boxname</box>
     <server>server</server>
-    <stompjms-version>1.8</stompjms-version>
+    <stompjms-version>1.15-SNAPSHOT</stompjms-version>
   </properties>
 
   <dependencies>
