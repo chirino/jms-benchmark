@@ -36,8 +36,8 @@ abstract class JMSClientScenario extends Scenario {
   def createProducer(i:Int) = {
     new ProducerClient(i)
   }
-  def createConsumer(i:Int) = {
-    new ConsumerClient(i)
+  def createConsumer(i:Int, drain:Boolean) = {
+    new ConsumerClient(i, drain)
   }
 
   protected def destination(i:Int):Destination
@@ -180,14 +180,23 @@ abstract class JMSClientScenario extends Scenario {
     def name:String
   }
 
-  class ConsumerClient(override val id: Int) extends JMSClient {
+  class ConsumerClient(override val id: Int, val drain:Boolean) extends JMSClient {
     def name = "consumer " + id
 
-    def execute {
+    def execute:Unit = {
+
       var session = if(tx_size==0) {
         connection.createSession(false, jms_ack_mode)
       } else {
         connection.createSession(true, Session.SESSION_TRANSACTED)
+      }
+
+      // Draining a durable topic is easy.. just unsubscribe it!
+      if ( drain && durable ) {
+        load_start_rendezvous(this, session)
+        session.unsubscribe(name)
+        done.set(true)
+        return
       }
 
       var consumer = if( durable ) {

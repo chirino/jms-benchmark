@@ -263,7 +263,7 @@ trait Scenario {
     }
 
     for (i <- 0 until consumers) {
-      val client = createConsumer(i)
+      val client = createConsumer(i, false)
       consumer_clients ::= client
       client.start()
     }
@@ -322,8 +322,10 @@ trait Scenario {
       ack_mode = "dups_ok"
 
       var consumer_clients = List[Client]()
-      for (i <- 0 until destination_count) {
-        val client = createConsumer(i)
+
+      val draining_consumers = if ( destination_type=="queue" ) destination_count else consumers
+      for (i <- 0 until draining_consumers) {
+        val client = createConsumer(i, true)
         consumer_clients ::= client
         client.start()
       }
@@ -378,7 +380,7 @@ trait Scenario {
 
     // we might need to increment number the consumers..
     for (i <- 0 until consumers_per_sample) {
-      val client = createConsumer(consumer_clients.length)
+      val client = createConsumer(consumer_clients.length, false)
       consumer_clients ::= client
       client.start()
     }
@@ -386,7 +388,7 @@ trait Scenario {
   }
   
   def createProducer(i:Int):Client
-  def createConsumer(i:Int):Client
+  def createConsumer(i:Int, drain:Boolean):Client
 
 }
 

@@ -415,7 +415,7 @@ class Benchmark extends Action {
             g.destination_type = mode
             g.persistent = persistent
             g.durable == persistent && mode == "topic"
-            g.ack_mode = if ( persistent ) "client" else "auto"
+            g.ack_mode = if ( persistent ) "client" else "dups_ok"
             g.message_size = message_size
             g.tx_size = tx_size
             g.destination_count = destination_count
