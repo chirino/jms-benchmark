@@ -15,6 +15,7 @@ class StompScenario extends JMSClientScenario {
   override protected def factory:ConnectionFactory = {
     val rc = new StompJmsConnectionFactory
     rc.setBrokerURI(url)
+    rc.setOmitHost(true)
     rc
   }
 
