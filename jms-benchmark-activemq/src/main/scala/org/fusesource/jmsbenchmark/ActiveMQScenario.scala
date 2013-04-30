@@ -33,6 +33,8 @@ object ActiveMQScenario {
  */
 class ActiveMQScenario extends JMSClientScenario {
 
+  var use_async_send_callback = java.lang.Boolean.getBoolean("use_async_send_callback")
+
   override protected def factory:ConnectionFactory = {
     val rc = new ActiveMQConnectionFactory
     rc.setBrokerURL(url)
@@ -44,13 +46,35 @@ class ActiveMQScenario extends JMSClientScenario {
     val heap_max = heap_usage.get("max").asInstanceOf[java.lang.Long].longValue()
 
     val prefetch_available_heap = (heap_max-(1024*1024*500))/10
-    val prefech_size = prefetch_available_heap/(consumers*message_size)
-    if( prefech_size < 1000 ) {
-      rc.getPrefetchPolicy.setAll(prefech_size.toInt)
+    if ( consumers*message_size > 0 ) {
+      val prefech_size = prefetch_available_heap/(consumers*message_size)
+      if( prefech_size < 1000 ) {
+        rc.getPrefetchPolicy.setAll(prefech_size.toInt)
+      }
     }
 
     rc
   }
+
+  val send_callback = new AsyncCallback(){
+    def onException(error: JMSException) {
+      if( !done.get() && display_errors ) {
+        error.printStackTrace()
+      }
+    }
+    def onSuccess() {
+      // An app could use this to know if the send succeeded.
+    }
+  }
+
+  def send_message(producer: MessageProducer, msg: TextMessage) {
+    if( use_async_send_callback && persistent && tx_size==0 ) {
+      ((ActiveMQMessageProducer)producer).send(msg, send_callback)
+    } else {
+      super.send_message()
+    }
+  }
+
 
   override protected def destination(i:Int):Destination = destination_type match {
     case "queue" => new ActiveMQQueue(indexed_destination_name(i))

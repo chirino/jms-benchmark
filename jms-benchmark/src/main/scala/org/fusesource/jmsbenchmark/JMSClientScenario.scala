@@ -273,7 +273,7 @@ abstract class JMSClientScenario extends Scenario {
       var tx_counter = 0
       while( !done.get() ) {
         msg.setLongProperty("ts", System.nanoTime());
-        producer.send(msg)
+        send_message(producer, msg)
         producer_counter.incrementAndGet()
 
         val sleep = _producer_sleep(this)
@@ -291,6 +291,10 @@ abstract class JMSClientScenario extends Scenario {
       }
 
     }
+  }
+
+  def send_message(producer: MessageProducer, msg: TextMessage) {
+    producer.send(msg)
   }
 
   def body(name:String) = {
