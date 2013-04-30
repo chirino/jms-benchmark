@@ -1,11 +1,11 @@
 package org.fusesource.jmsbenchmark
 
-import org.apache.activemq.ActiveMQConnectionFactory
-import javax.jms.{Destination, ConnectionFactory}
+import org.apache.activemq._
+import javax.jms._
 import org.apache.activemq.command.{ActiveMQTopic, ActiveMQQueue}
-import management.ManagementFactory
 import javax.management.ObjectName
 import javax.management.openmbean.CompositeData
+import java.lang.management.ManagementFactory
 
 object ActiveMQScenario {
   def main(args:Array[String]):Unit = {
@@ -67,11 +67,11 @@ class ActiveMQScenario extends JMSClientScenario {
     }
   }
 
-  def send_message(producer: MessageProducer, msg: TextMessage) {
+  override def send_message(producer: MessageProducer, msg: TextMessage) {
     if( use_async_send_callback && persistent && tx_size==0 ) {
-      ((ActiveMQMessageProducer)producer).send(msg, send_callback)
+      producer.asInstanceOf[ActiveMQMessageProducer].send(msg, send_callback)
     } else {
-      super.send_message()
+      super.send_message(producer, msg)
     }
   }
 
