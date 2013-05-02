@@ -1,4 +1,4 @@
 {
-  "platforms":["perf48_rhel64_solarflare_10gb", "perf80_rhel64"],
-  "products":["jboss-a-mq-6.0.0.redhat-019-openwire", "jboss-a-mq-6.0.0.redhat-019-openwire-numad_on", "jboss-a-mq-6.0.0.redhat-024-openwire", "qpid-cpp-server-0.18-14"]
+  "platforms":["perf80_rhel64"],
+  "products":["jboss-a-mq-6.0.0.redhat-024-openwire", "qpid-cpp-server-0.18-14"]
 }

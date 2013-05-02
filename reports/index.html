@@ -10,6 +10,8 @@
   <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
   <link href="css/app.css" rel="stylesheet">
 
+  <script src="js/libs/d3.v3.js"></script>
+  <script src="js/libs/d3.box.js"></script>
   <script src="js/libs/jquery-1.9.1.js"></script>
   <script src="js/libs/jquery.flot.js"></script> 
   <script src="js/libs/jquery.flot.crosshair.js"></script> 
@@ -35,15 +37,7 @@
         <span class="icon-bar"></span>
       </a>
       <a class="brand">JMS Benchmark Reports</a>
-
       <div class="nav-collapse" id="main-menu">
-        <!--
-        <ul class="nav" id="main-menu-left">
-          <li><a href="">Broker</a></li>
-          <li><a href="">Alerts</a></li>
-          <li><a href="">Logs</a></li>
-        </ul>
-        -->
         <ul class="nav pull-right" id="main-menu-right">
         </ul>
       </div>
@@ -56,7 +50,102 @@
       {{view view.Bootstrap.Tabs contentBinding="tabs" selectionBinding="selected_tab"}}
     </div>
   </div>  
-  {{#if tab_selected_scenarios}}
+  {{#if tab_selected_summary}}
+    <div class="row">
+      <div class="span12">
+        <table><tr><th class="block"><div class="r90">Non-Persistent Scenarios</div></th><td>
+          <table><tr><th class="block"><div class="r90">Queue Scenarios</div></th><td>
+            <div class="scaling_scenario">
+              <strong>Queue throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size"}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size"}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size"}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size"}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Queue throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers"}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers"}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers"}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers"}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Queue throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers"}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers"}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers"}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers"}}{{/if}}
+            </div>
+          </td></tr></table>
+          <table><tr><th class="block"><div class="r90">Topic Scenarios</div></th><td>
+            <div class="scaling_scenario">
+              <strong>Topic throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size" hold='{"mode":"topic"}'}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Topic throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers" hold='{"mode":"topic"}'}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Topic throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers" hold='{"mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers" hold='{"mode":"topic"}'}}{{/if}}
+            </div>
+          </td></tr></table>
+        </td></tr></table>
+        <br/>
+        <table><tr><th class="block"><div class="r90">Persistent Scenarios</div></th><td>
+          <table><tr><th class="block"><div class="r90">Queue Scenarios</div></th><td>
+            <div class="scaling_scenario">
+              <strong>Queue throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size" hold='{"persistent":true}'}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Queue throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers" hold='{"persistent":true}'}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Queue throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers" hold='{"persistent":true}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers" hold='{"persistent":true}'}}{{/if}}
+            </div>
+          </td></tr></table>
+          <table><tr><th class="block"><div class="r90">Topic Scenarios</div></th><td>
+            <div class="scaling_scenario">
+              <strong>Topic throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Topic throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+            </div><div class="scaling_scenario">
+              <strong>Topic throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
+            </div>
+          </td></tr></table>
+        </td></tr></table>
+      </div>
+    </div>
+  {{/if}}
+  {{#if tab_selected_details}}
     {{#with App.ScenariosController}}
     <div class="row">
       <div class="span3">
@@ -142,11 +231,6 @@
       </div>
     </div>
     {{/with}}
-  {{/if}}
-  {{#if tab_selected_trends}}
-  <div class="span12" >
-    ... comming soon ...
-  </div>
   {{/if}}
 </div>
 {{/with}}

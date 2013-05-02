@@ -88,3 +88,54 @@ div.application {
 .center{text-align:center;}
 
 body{font-weight:normal;}
+
+table.boxplot { border-collapse:separate; font: 10px sans-serif; margin: 0;}
+table.boxplot tr td { text-align: center; padding: 0 10px 0 10px; vertical-align: top }
+table.boxplot tr td.chart { white-space:nowrap; }
+
+table.boxplot tr td.legend { text-align: left }
+td.legend table { margin:10px }
+td.legend table tr td { text-align: left; vertical-align: top}
+
+
+.box line,
+.box rect,
+.box circle { fill: #fff;   stroke-width: 1.5px; }
+.box { stroke: #000; }
+.box .center { stroke-dasharray: 3,3; }
+
+.axis {  shape-rendering: crispEdges;}
+.x.axis line { stroke: #fff; }
+.x.axis .minor { stroke-opacity: .5;}
+.x.axis path { display: none; }
+.y.axis line, .y.axis path {  fill: none; stroke: #000; }
+
+.series0 .box, .series0   {  stroke: Green; color: Green; }
+.series1 .box, .series1   {  stroke: Blue; color: Blue; }
+.series2 .box, .series2   {  stroke: Aqua; color: Aqua; }
+.series3 .box, .series3   {  stroke: Purple; color: Purple; }
+.series4 .box, .series4   {  stroke: Orange; color: Orange; }
+.series5 .box, .series5   {  stroke: Olive; color: Olive; }
+.series6 .box, .series6   {  stroke: Maroon; color: Maroon; }
+.series7 .box, .series7   {  stroke: Red; color: Red; }
+.series8 .box, .series8   {  stroke: Teal; color: Teal; }
+.series9 .box, .series9   {  stroke: Lime; color: Lime; }
+.series10 .box, .series10 {  stroke: Fuchsia; color: Fuchsia; }
+.series11 .box, .series11 {  stroke: Yellow; color: Yellow; }
+.series12 .box, .series12 {  stroke: Navy; color: Navy; }
+.series13 .box, .series13 {  stroke: Gray; color: Gray; }
+                        
+.block { background: #baccd8; height:2em; border-radius: 8px; -webkit-border-radius: 8px;  -moz-border-radius: 8px; }
+.r90 { width:2em; height:auto; white-space:nowrap; -webkit-transform: rotate(-90deg); -moz-transform:rotate(-90deg); filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3); }
+.y.axis.label {
+  float:left;
+  background: #baccd8; height:2em; border-radius: 8px; -webkit-border-radius: 8px;  -moz-border-radius: 8px;
+  width:2em; height:auto; white-space:nowrap; -webkit-transform: rotate(-90deg); -moz-transform:rotate(-90deg); filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+
+div.scaling_scenario {
+  padding:10px;
+}
+
+
+

@@ -10,6 +10,9 @@ Array.prototype.percentile = function(p) {
    return this[ii - 1] + (ii - i) * (this[ii] - this[ii - 1]);
   }     
 };
+Array.prototype.insert = function (index, item) {
+  this.splice(index, 0, item);
+};
 
 App = Ember.Application.create({
   group_by:function(data, grouper) {
@@ -42,13 +45,13 @@ App = Ember.Application.create({
 });
 
 App.MainController = Ember.Controller.extend({
-  tabs:["Scenarios","Trends"],
-  selected_tab:"Scenarios",
-  tab_selected_scenarios:function() {
-    return this.get("selected_tab") == "Scenarios"
+  tabs:["Summary", "Details"],
+  selected_tab:"Summary",
+  tab_selected_summary:function() {
+    return this.get("selected_tab") == "Summary"
   }.property("selected_tab"),
-  tab_selected_trends:function() {
-    return this.get("selected_tab") == "Trends"
+  tab_selected_details:function() {
+    return this.get("selected_tab") == "Details"
   }.property("selected_tab"),
 }).create();
 
@@ -362,6 +365,241 @@ App.Chart = Ember.View.extend({
     }    
   },
 });
+
+App.SummaryChart = Ember.View.extend({
+  
+  width:20,
+  height:200,
+  
+  metric:"producer tp",
+  hold:'{}',
+  vary:"producers",
+  
+  charts:function() {
+    
+    var show_metric = this.get('metric');
+    var rc = [];
+    var hold = {"mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "selector_complexity": 0, "producers": 1, "destination_count": 1, "consumers": 1}
+    var t = JSON.parse(this.get('hold'));
+    for( i in t ) {
+      hold[i] = t[i];
+    }
+    var vary = this.get('vary');
+        
+    var flatten = function(map, keyprop) {
+      var rc = []
+      for( k in map) {
+        var value = map[k]
+        if( keyprop ) {        
+          value[keyprop] = k
+        }
+        rc.push(value)
+      }
+      return rc;
+    }
+
+    var select = function(vary, match) {
+      
+      var fixed = {};      
+      App.ScenariosController.get('parameters_by_key').forEach(function(parameter){
+        var key = parameter.key;
+        if( key != vary ) {
+          var value = match[key]
+          if( value != undefined ) {
+            fixed[key] = value;
+          }
+        }
+      });
+
+      var show_scenario = function(scenario) {
+        for( key in fixed ) {
+          if( fixed[key] != scenario.parameters[key] ) {
+            return false;
+          }
+        }
+        return true;
+      }
+      
+      var group_by = {};
+      var add_data = function(broker_name, scenario, metrics, units, scale_fn) {
+        var group_key = JSON.stringify(fixed)+":"+metrics      
+        if( !group_by[group_key] ) {
+          group_by[group_key] = {
+            title:group_key,
+            parameters: scenario.parameters,
+            metrics:metrics,
+            categories:{},
+            x_values:[]
+          }
+        }
+        var group = group_by[group_key];
+        
+        if( !group.categories[broker_name] ) {
+          var category = {
+            label: broker_name+" "+metrics,
+            data: {},
+            units: units,
+          };
+          group.categories[broker_name] = category
+        }
+        var category = group.categories[broker_name]
+        
+        var x = scenario.parameters[vary];
+        if( !group.x_values.contains(x) )
+          group.x_values.push(x)
+        category.data[x] = scenario[metrics]
+      }
+    
+      var content = App.ScenariosController.get('content')
+      content.forEach(function(benchmark){
+        if( benchmark.show ) {
+          var broker_name = benchmark.benchmark_settings.broker_name;
+          benchmark.scenarios.forEach(function(scenario) {
+            if( show_scenario(scenario) ) {
+              var units = "msg/sec";
+              if( show_metric == "max latency") {
+                units = "ns"
+              }
+              if( show_metric == "errors") {
+                units = "errors/sec"
+              }
+              add_data(broker_name, scenario, show_metric, "msg/sec");
+            }
+          });
+        }
+      });
+      
+      for( key in group_by ) {
+        var value = group_by[key];
+        value.x_values = value.x_values.sortNumber();
+        value.categories = flatten(group_by[key].categories)
+        value.categories.forEach(function(item, i){
+          item["class"]="series"+i;
+        });
+        value.vary = vary
+        value.hold = hold
+        rc.push(group_by[key]);
+      }
+    };
+
+    select(vary, hold);
+    
+    return rc;
+  }.property(
+    "App.ScenariosController.content.@each"
+  ),  
+  
+  didInsertElement: function() {
+    this.redraw();
+  },
+  
+  on_change: function() {
+    this.redraw();
+  }.observes("charts", "width", "height", "box_wisker"),
+  
+  redraw: function() {
+    var self = this;
+    this.$().html("");
+    var charts = this.get('charts')
+    if( charts.length > 0 ) {
+      var count = 0
+      charts.forEach(function(chart){
+        self.render_chart(chart)
+      });
+    }
+  },
+  
+  render_chart: function(content) {
+
+    var show_metric = this.get('metric');
+    
+    // Figure out the data min/max range...
+    var min = Infinity;
+    var max = -Infinity;
+    
+    content.categories.forEach(function(category){
+      content.x_values.forEach(function(x) {
+        var data = category.data[x]
+        if( data ) {
+          data.forEach(function(item) {
+            if (item > max) max = item;
+            if (item < min) min = item;
+          });
+        }
+      });
+    });
+
+    var margin = {top: 10, right: 10, bottom: 10, left: 70},
+        width = 70 - margin.left - margin.right,
+        height = 200 - margin.top - margin.bottom;
+
+    var scale = d3.scale.linear().range([height, 0]).domain([min, max]);
+    var axis = d3.svg.axis().scale(scale).ticks(4).orient("left");
+
+    var table = d3.select(this.$()[0]).append("table")
+      .attr("class", "boxplot");
+    var row1 = table.append("tr");
+    var row2 = table.append("tr");
+
+    var td = row1.append("td")
+
+    var svg = td.append("svg")
+    svg.attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.bottom + margin.top)
+      .append("svg:g")
+        .attr("class", "y axis")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .call(axis); 
+        
+    svg.append("text")
+      .attr("class", "y label")
+      .attr("text-anchor", "middle")
+      .attr("x", -height/2)
+      .attr("dy", "1em")
+      .attr("width", height)
+      .attr("transform", "rotate(-90)")
+      .text(show_metric);        
+    row2.append("td").text(content.vary);
+        
+    var width = this.get('width');
+    var height = this.get('height');
+    var margin = {top: 10, right: 2, bottom: 10, left: 2};
+    width = width - margin.left - margin.right;
+    height = height - margin.top - margin.bottom;
+    
+    content.x_values.forEach(function(x) {
+      row2.append("td").text(x);
+      var td = row1.append("td").attr("class", "chart")  
+      content.categories.forEach(function(category, i) {
+        var data = category.data[x];
+        if( data ) {
+          var chart = d3.box().width(width).height(height).domain([min, max]);
+          td.selectAll("x")
+              .data([data])
+            .enter().append("svg")
+              .attr("class", "box "+category["class"])
+              .attr("width", width + margin.left + margin.right)
+              .attr("height", height + margin.bottom + margin.top)
+            .append("g")
+              .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+              .call(chart);
+        }
+      });
+    });
+    
+    var td = row1.append("td").attr("class", "legend")
+    td.append("strong").text("Legend")
+    var legend = td.append("table")
+    content.categories.forEach(function(category, i) {
+      legend.append("tr").append("td").attr("class", category["class"]).text(category.label)
+    });      
+    var dec = ""
+    for( key in content.hold ) {
+      dec += ""+key+"="+content.hold[key]+", "
+    }
+    td.append("div").text("scenario: "+dec)
+  }
+})
 
 // Lets load the benchmark data files...
 $.ajax({ url: "index.json", dataType:"json", 
