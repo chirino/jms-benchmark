@@ -152,6 +152,7 @@ App.ScenariosController = Ember.ArrayController.extend({
           title:group_key,
           parameters: App.map_entry_array(scenario.parameters),
           metrics:metrics,
+          units: units,
           lines:[]
         }
       }
@@ -160,7 +161,6 @@ App.ScenariosController = Ember.ArrayController.extend({
         label: broker_name+" "+metrics,
         x: scenario["timestamp"],
         y: scenario[metrics],
-        units: units,
         scale_fn:scale_fn || function(x){ return x;}
       });
     }
@@ -382,7 +382,7 @@ App.SummaryChart = Ember.View.extend({
   click: function(evt) {
     var show_metric = this.get('metric');
     var rc = [];
-    var hold = {"mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "selector_complexity": 0, "producers": 1, "destination_count": 1, "consumers": 1}
+    var hold = {"group":"throughput", "mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "selector_complexity": 0, "producers": 1, "destination_count": 1, "consumers": 1}
     var t = JSON.parse(this.get('hold'));
     for( i in t ) {
       hold[i] = t[i];
@@ -453,6 +453,8 @@ App.SummaryChart = Ember.View.extend({
           parameters: scenario.parameters,
           metrics:metrics,
           categories:{},
+          scale_fn: scale_fn,
+          units: units,
           x_values:[]
         }
       }
@@ -465,12 +467,10 @@ App.SummaryChart = Ember.View.extend({
         var category = {
           label: broker_name+" "+metrics,
           data: {},
-          units: units,
         };
         group.categories[broker_name] = category
       }
       var category = group.categories[broker_name]
-            
       category.data[x] = scenario[metrics]
     }
   
@@ -481,8 +481,12 @@ App.SummaryChart = Ember.View.extend({
         benchmark.scenarios.forEach(function(scenario) {
           if( show_scenario(scenario) ) {
             var units = "msg/sec";
+            var scale_fn = function(value) { return value; }
             if( show_metric == "max latency") {
-              units = "ns"
+              units = "ms"
+              scale_fn = function(value) {
+                return value / 1000000.0;
+              };
             }
             if( show_metric == "errors") {
               units = "errors/sec"
@@ -490,7 +494,7 @@ App.SummaryChart = Ember.View.extend({
             
             var x = scenario.parameters[vary[0]];
             if( vary.every(function(vary) { return scenario.parameters[vary]==x; }) ) {
-              add_data(x, broker_name, scenario, show_metric, "msg/sec");
+              add_data(x, broker_name, scenario, show_metric, units, scale_fn);
             }
           }
         });
@@ -548,6 +552,7 @@ App.SummaryChart = Ember.View.extend({
         var data = category.data[x]
         if( data ) {
           data.forEach(function(item) {
+            item = content.scale_fn(item);
             if (item > max) max = item;
             if (item < min) min = item;
           });
@@ -599,7 +604,7 @@ App.SummaryChart = Ember.View.extend({
       .attr("dy", "1em")
       .attr("width", height)
       .attr("transform", "rotate(-90)")
-      .text(show_metric);        
+      .text(show_metric+" ("+content.units+")");        
     row2.append("td").attr("style", "font-weight:bold; font-size:10px").text(content.vary.join());
         
     var width = this.get('width');
@@ -612,8 +617,9 @@ App.SummaryChart = Ember.View.extend({
       row2.append("td").text(x);
       var td = row1.append("td").attr("class", "chart")  
       content.categories.forEach(function(category, i) {
-        var data = category.data[x];
+        var data = category.data[x]
         if( data ) {
+          data = data.map(content.scale_fn);
           var chart = d3.box().width(width).height(height).domain([min, max]);
           td.selectAll("x")
               .data([data])
