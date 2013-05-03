@@ -379,6 +379,34 @@ App.SummaryChart = Ember.View.extend({
   hold:'{}',
   vary:"producers",
   
+  click: function(evt) {
+    var show_metric = this.get('metric');
+    var rc = [];
+    var hold = {"mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "selector_complexity": 0, "producers": 1, "destination_count": 1, "consumers": 1}
+    var t = JSON.parse(this.get('hold'));
+    for( i in t ) {
+      hold[i] = t[i];
+    }
+    
+    var vary = this.get('vary').split(",");
+    vary.forEach(function(v){
+      delete hold[v];
+    })
+    
+    var parameters = App.ScenariosController.get("parameters");
+    parameters.forEach(function(parameter){
+      var key = parameter.get("key");
+      var value = parameter.get("label");
+      if( vary.contains(key) || hold[key] == value) {
+        parameter.set("show", true);
+      } else {
+        parameter.set("show", false);
+      }
+    });
+    
+    App.MainController.set("selected_tab", "Details");
+  },
+  
   charts:function() {
     
     var show_metric = this.get('metric');
