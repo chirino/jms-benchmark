@@ -46,6 +46,46 @@
 </div>
 <div class="container" style="padding-top:62px;">
   {{#if App.ScenariosController.loaded}}
+  
+  <div class="row">
+    {{#with App.ScenariosController}}
+    <div class="span6">
+      <strong>Benchmark Runs:</strong>
+      <div style="padding:1em; font-size:80%;">
+      {{#each benchmark in benchmarks_by_platform}}
+        {{#each item in benchmark.values}}
+        <div>
+          {{view Ember.Checkbox checkedBinding="item.show"}}
+          {{benchmark.key}} / {{item.benchmark_settings.broker_name}}
+        </div>
+        {{/each}}
+      {{/each}}
+      </div>
+    </div>
+    <div class="span6">
+      <strong>Metrics:</strong>
+      <div style="padding:1em; font-size:80%;">
+        <div>
+          {{view Ember.Checkbox checkedBinding="show_producer_tp"}}
+          Producer Throughput
+        </div>  
+        <div>
+          {{view Ember.Checkbox checkedBinding="show_consumer_tp"}}
+          Consumer Throughput
+        </div>  
+        <div>
+          {{view Ember.Checkbox checkedBinding="show_max_latency"}}
+          Max Latency
+        </div>  
+        <div>
+          {{view Ember.Checkbox checkedBinding="show_errors"}}
+          Errors
+        </div>  
+      </div>
+    </div>
+    {{/with}}
+  </div>  
+  
   <div class="row">
     <div class="span12">
       {{view view.Bootstrap.Tabs contentBinding="tabs" selectionBinding="selected_tab"}}
@@ -235,41 +275,6 @@
             <label>
               {{view Ember.Checkbox checkedBinding="box_wisker"}}
               Box and Wisker Plot
-            </label>  
-          </div>
-          <strong>benchmarks against:</strong>
-          <div style="padding:.5em">
-          {{#each item in benchmarks_by_platform}}
-            <label>
-              <strong>{{item.key}}:</strong>
-              <div style="padding:.5em">
-              {{#each item in item.values}}
-                <label>
-                  {{view Ember.Checkbox checkedBinding="item.show"}}
-                  {{item.benchmark_settings.broker_name}}
-                </label>  
-              {{/each}}
-              </div>
-            </label>  
-          {{/each}}
-          </div>
-          <strong>metrics:</strong>
-          <div style="padding:.5em">
-            <label>
-              {{view Ember.Checkbox checkedBinding="show_producer_tp"}}
-              Producer Throughput
-            </label>  
-            <label>
-              {{view Ember.Checkbox checkedBinding="show_consumer_tp"}}
-              Consumer Throughput
-            </label>  
-            <label>
-              {{view Ember.Checkbox checkedBinding="show_max_latency"}}
-              Max Latency
-            </label>  
-            <label>
-              {{view Ember.Checkbox checkedBinding="show_errors"}}
-              Errors
             </label>  
           </div>
         </div>

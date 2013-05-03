@@ -511,7 +511,8 @@ App.SummaryChart = Ember.View.extend({
     
     return rc;
   }.property(
-    "App.ScenariosController.content.@each"
+    "App.ScenariosController.content.@each",
+    "App.ScenariosController.content.@each.show"
   ),  
   
   didInsertElement: function() {
@@ -591,6 +592,7 @@ App.SummaryChart = Ember.View.extend({
         .call(axis); 
         
     svg.append("text")
+      .attr("style", "font-weight:bold; font-size:10px")
       .attr("class", "y label")
       .attr("text-anchor", "middle")
       .attr("x", -height/2)
@@ -598,7 +600,7 @@ App.SummaryChart = Ember.View.extend({
       .attr("width", height)
       .attr("transform", "rotate(-90)")
       .text(show_metric);        
-    row2.append("td").text(content.vary.join());
+    row2.append("td").attr("style", "font-weight:bold; font-size:10px").text(content.vary.join());
         
     var width = this.get('width');
     var height = this.get('height');
