@@ -388,8 +388,20 @@ App.SummaryChart = Ember.View.extend({
     for( i in t ) {
       hold[i] = t[i];
     }
-    var vary = this.get('vary');
-    delete hold[vary];
+    
+    var vary = this.get('vary').split(",");
+    vary.forEach(function(v){
+      delete hold[v];
+    })
+    
+    var show_scenario = function(scenario) {
+      for( key in hold ) {
+        if( hold[key] != scenario.parameters[key] ) {
+          return false;
+        }
+      }
+      return true;
+    }
         
     var flatten = function(map, keyprop) {
       var rc = []
@@ -403,91 +415,71 @@ App.SummaryChart = Ember.View.extend({
       return rc;
     }
 
-    var select = function(vary, match) {
-      
-      var fixed = {};      
-      App.ScenariosController.get('parameters_by_key').forEach(function(parameter){
-        var key = parameter.key;
-        if( key != vary ) {
-          var value = match[key]
-          if( value != undefined ) {
-            fixed[key] = value;
-          }
-        }
-      });
-
-      var show_scenario = function(scenario) {
-        for( key in fixed ) {
-          if( fixed[key] != scenario.parameters[key] ) {
-            return false;
-          }
-        }
-        return true;
-      }
-      
-      var group_by = {};
-      var add_data = function(broker_name, scenario, metrics, units, scale_fn) {
-        var group_key = JSON.stringify(fixed)+":"+metrics      
-        if( !group_by[group_key] ) {
-          group_by[group_key] = {
-            title:group_key,
-            parameters: scenario.parameters,
-            metrics:metrics,
-            categories:{},
-            x_values:[]
-          }
-        }
-        var group = group_by[group_key];
-        
-        if( !group.categories[broker_name] ) {
-          var category = {
-            label: broker_name+" "+metrics,
-            data: {},
-            units: units,
-          };
-          group.categories[broker_name] = category
-        }
-        var category = group.categories[broker_name]
-        
-        var x = scenario.parameters[vary];
-        if( !group.x_values.contains(x) )
-          group.x_values.push(x)
-        category.data[x] = scenario[metrics]
-      }
     
-      var content = App.ScenariosController.get('content')
-      content.forEach(function(benchmark){
-        if( benchmark.show ) {
-          var broker_name = benchmark.benchmark_settings.broker_name;
-          benchmark.scenarios.forEach(function(scenario) {
-            if( show_scenario(scenario) ) {
-              var units = "msg/sec";
-              if( show_metric == "max latency") {
-                units = "ns"
-              }
-              if( show_metric == "errors") {
-                units = "errors/sec"
-              }
-              add_data(broker_name, scenario, show_metric, "msg/sec");
-            }
-          });
+    var group_by = {};
+    var add_data = function(x, broker_name, scenario, metrics, units, scale_fn) {
+      var group_key = JSON.stringify(hold)+":"+metrics      
+      if( !group_by[group_key] ) {
+        group_by[group_key] = {
+          title:group_key,
+          parameters: scenario.parameters,
+          metrics:metrics,
+          categories:{},
+          x_values:[]
         }
-      });
-      
-      for( key in group_by ) {
-        var value = group_by[key];
-        value.x_values = value.x_values.sortNumber();
-        value.categories = flatten(group_by[key].categories)
-        value.categories.forEach(function(item, i){
-          item["class"]="series"+i;
-        });
-        value.vary = vary
-        value.hold = hold
-        rc.push(group_by[key]);
       }
-    };
-
-    select(vary, hold);
+      var group = group_by[group_key];
+      if( !group.x_values.contains(x) ) {
+        group.x_values.push(x)
+      }
+      
+      if( !group.categories[broker_name] ) {
+        var category = {
+          label: broker_name+" "+metrics,
+          data: {},
+          units: units,
+        };
+        group.categories[broker_name] = category
+      }
+      var category = group.categories[broker_name]
+            
+      category.data[x] = scenario[metrics]
+    }
+  
+    var content = App.ScenariosController.get('content')
+    content.forEach(function(benchmark){
+      if( benchmark.show ) {
+        var broker_name = benchmark.benchmark_settings.broker_name;
+        benchmark.scenarios.forEach(function(scenario) {
+          if( show_scenario(scenario) ) {
+            var units = "msg/sec";
+            if( show_metric == "max latency") {
+              units = "ns"
+            }
+            if( show_metric == "errors") {
+              units = "errors/sec"
+            }
+            
+            var x = scenario.parameters[vary[0]];
+            if( vary.every(function(vary) { return scenario.parameters[vary]==x; }) ) {
+              add_data(x, broker_name, scenario, show_metric, "msg/sec");
+            }
+          }
+        });
+      }
+    });
+    
+    for( key in group_by ) {
+      var value = group_by[key];
+      value.x_values = value.x_values.sortNumber();
+      value.categories = flatten(group_by[key].categories)
+      value.categories.forEach(function(item, i){
+        item["class"]="series"+i;
+      });
+      value.vary = vary
+      value.hold = hold
+      rc.push(group_by[key]);
+    }
     
     return rc;
   }.property(
@@ -578,7 +570,7 @@ App.SummaryChart = Ember.View.extend({
       .attr("width", height)
       .attr("transform", "rotate(-90)")
       .text(show_metric);        
-    row2.append("td").text(content.vary);
+    row2.append("td").text(content.vary.join());
         
     var width = this.get('width');
     var height = this.get('height');
