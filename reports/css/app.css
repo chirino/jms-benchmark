@@ -138,5 +138,8 @@ div.scaling_scenario {
   padding:10px;
 }
 
-
+@media print {
+	.no-print{ display: none; }
+	.scaling_scenario { page-break-inside:avoid; }
+}
 
