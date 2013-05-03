@@ -45,6 +45,7 @@
   </div>
 </div>
 <div class="container" style="padding-top:62px;">
+  {{#if App.ScenariosController.loaded}}
   <div class="row">
     <div class="span12">
       {{view view.Bootstrap.Tabs contentBinding="tabs" selectionBinding="selected_tab"}}
@@ -53,8 +54,10 @@
   {{#if tab_selected_summary}}
     <div class="row">
       <div class="span12">
-        <table><tr><th class="block"><div class="r90">Non-Persistent Scenarios</div></th><td>
-          <table><tr><th class="block"><div class="r90">Queue Scenarios</div></th><td>
+        <h2>Non-Persistent Scenarios</h2>
+        <div style="padding:0 1em 0 1em">
+          <h3>Queue Scenarios</h3>
+          <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Queue throughput as you scale message size:</strong>
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size"}}{{/if}}
@@ -80,8 +83,9 @@
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size"}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size"}}{{/if}}
             </div>
-          </td></tr></table>
-          <table><tr><th class="block"><div class="r90">Topic Scenarios</div></th><td>
+          </div>
+          <h3>Topic Scenarios</h3>
+          <div style="padding:10px">
             <div class="scaling_scenario">
               <strong>Topic throughput as you scale message size:</strong>
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"mode":"topic"}'}}{{/if}}
@@ -107,11 +111,13 @@
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size" hold='{"mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size" hold='{"mode":"topic"}'}}{{/if}}
             </div>
-          </td></tr></table>
-        </td></tr></table>
+          </div>
+        </div>
         <br/>
-        <table><tr><th class="block"><div class="r90">Persistent Scenarios</div></th><td>
-          <table><tr><th class="block"><div class="r90">Queue Scenarios</div></th><td>
+        <h2>Persistent Scenarios</h2>
+        <div style="padding:0 1em 0 1em">
+          <h3>Queue Scenarios</h3>
+          <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Queue throughput as you scale message size:</strong>
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":true}'}}{{/if}}
@@ -137,8 +143,8 @@
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size" hold='{"persistent":true}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size" hold='{"persistent":true}'}}{{/if}}
             </div>
-          </td></tr></table>
-          <table><tr><th class="block"><div class="r90">Topic Scenarios</div></th><td>
+          </div>
+          <h3>Topic Scenarios</h3>
             <div class="scaling_scenario">
               <strong>Topic throughput as you scale message size:</strong>
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
@@ -164,8 +170,8 @@
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
             </div>
-          </td></tr></table>
-        </td></tr></table>
+          </div>
+        </div>
       </div>
     </div>
   {{/if}}
@@ -255,6 +261,13 @@
       </div>
     </div>
     {{/with}}
+  {{/if}}
+  {{else}}
+  <div class="row">
+    <div class="span12">
+      Loading...
+    </div>
+  </div>  
   {{/if}}
 </div>
 {{/with}}

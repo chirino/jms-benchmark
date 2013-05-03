@@ -62,7 +62,11 @@ App.ScenariosController = Ember.ArrayController.extend({
   show_consumer_tp:true,
   show_max_latency:false,
   show_errors:false,  
-  box_wisker:false,  
+  box_wisker:false, 
+  
+  loaded:function() {
+    return this.get("content").length!=0;
+  }.property("content.@each"),
 
   benchmarks_by_platform:function() {
     return App.group_by(this.get('content'), function(benchmark){
@@ -385,6 +389,7 @@ App.SummaryChart = Ember.View.extend({
       hold[i] = t[i];
     }
     var vary = this.get('vary');
+    delete hold[vary];
         
     var flatten = function(map, keyprop) {
       var rc = []
@@ -541,6 +546,20 @@ App.SummaryChart = Ember.View.extend({
     var row1 = table.append("tr");
     var row2 = table.append("tr");
 
+    var td = row1.append("td").attr("class", "legend")
+    var dec = ""
+    for( key in content.hold ) {
+      dec += ""+key+"="+content.hold[key]+", "
+    }
+    td.append("strong").text("Scenario")
+    td.append("div").text(dec)
+    td.append("strong").text("Legend")
+    var legend = td.append("table")
+    content.categories.forEach(function(category, i) {
+      legend.append("tr").append("td").attr("class", category["class"]).text(category.label)
+    });      
+    row2.append("td")
+    
     var td = row1.append("td")
 
     var svg = td.append("svg")
@@ -587,17 +606,6 @@ App.SummaryChart = Ember.View.extend({
       });
     });
     
-    var td = row1.append("td").attr("class", "legend")
-    td.append("strong").text("Legend")
-    var legend = td.append("table")
-    content.categories.forEach(function(category, i) {
-      legend.append("tr").append("td").attr("class", category["class"]).text(category.label)
-    });      
-    var dec = ""
-    for( key in content.hold ) {
-      dec += ""+key+"="+content.hold[key]+", "
-    }
-    td.append("div").text("scenario: "+dec)
   }
 })
 
