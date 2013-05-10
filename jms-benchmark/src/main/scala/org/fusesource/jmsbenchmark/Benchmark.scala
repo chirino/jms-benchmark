@@ -17,17 +17,22 @@
  */
 package org.fusesource.jmsbenchmark
 
-import collection.mutable.{ListBuffer, HashMap}
+import scala.collection.mutable.{ListBuffer, HashMap}
 
-import java.io.{PrintStream, FileOutputStream, File}
+import java.io.{FileInputStream, PrintStream, FileOutputStream, File}
 import org.apache.felix.gogo.commands.basic.DefaultActionPreparator
-import collection.JavaConversions
+import scala.collection.JavaConversions
 import java.lang.{String, Class}
 import org.apache.felix.gogo.commands.{Option => option, Argument => argument, Command => command, CommandException, Action}
 import org.apache.felix.service.command.CommandSession
 import java.util.concurrent.TimeoutException
 import org.ocpsoft.prettytime.PrettyTime
 import java.util.Date
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.annotation.{JsonProperty, JsonInclude}
+import scala.reflect.BeanProperty
+import scala._
+import scala.Some
 
 object Benchmark {
   def main(args: Array[String]):Unit = {
@@ -45,7 +50,7 @@ object Benchmark {
     val action = new Benchmark()
     val p = new DefaultActionPreparator
     try {
-      import collection.JavaConversions._
+      import scala.collection.JavaConversions._
       if( p.prepare(action, session, args.toList) ) {
         action.execute(session)
       }
@@ -55,10 +60,47 @@ object Benchmark {
         System.exit(-1);
     }
   }
+
+  val MAPPER = new ObjectMapper()
+  MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+
+  def parse_scenario_name(name: String) = {
+    MAPPER.readValue("{" + name + "}", classOf[java.util.TreeMap[String, Object]])
+  }
 }
+
+class ScenarioReport {
+  @BeanProperty
+  var parameters = new java.util.TreeMap[String, Object]();
+  @BeanProperty
+  var timestamp = Array[Long]()
+  @BeanProperty
+  @JsonProperty("producer tp")
+  var producer_tp = Array[Long]()
+  @BeanProperty
+  @JsonProperty("consumer tp")
+  var consumer_tp = Array[Long]()
+  @BeanProperty
+  @JsonProperty("max latency")
+  var max_latency = Array[Long]()
+  @BeanProperty
+  var errors = Array[Long]()
+}
+
+class BenchmarkReport {
+  @BeanProperty
+  var benchmark_settings = new java.util.TreeMap[String, Object]()
+  @BeanProperty
+  var scenarios = Array[ScenarioReport]()
+}
+
 
 @command(scope="stomp", name = "benchmark", description = "The Stomp benchmarking tool")
 class Benchmark extends Action {
+  import Benchmark._
+
+  @option(name = "--continue", description = "Should we continue from the last run?  Avoid re-running previously run scenarios.")
+  var continue = true
 
   @option(name = "--provider", description = "The type of provider being benchmarked.")
   var provider:String = "activemq"
@@ -110,10 +152,34 @@ class Benchmark extends Action {
   @option(name = "--show-skips", description = "Should skipped scenarios be displayed.")
   var show_skips = false
 
-  var samples = HashMap[String, List[DataSample]]()
-
   def json_format[T](value:List[T]):String = {
     "[ "+value.mkString(", ")+" ]"
+  }
+
+  var benchmark_settings = new java.util.TreeMap[String, Object]()
+  var scenario_reports = new java.util.LinkedHashMap[java.util.TreeMap[String, Object], ScenarioReport]()
+
+  def have_scenario_report(name:String) = {
+    val parameters = parse_scenario_name(name)
+    scenario_reports.containsKey(parameters)
+  }
+
+  def add_scenario_report(name:String, samples:List[DataSample]) = {
+    import scala.collection.JavaConversions._
+
+    val scenario = new ScenarioReport
+    scenario.parameters = parse_scenario_name(name)
+    scenario.timestamp = samples.map(_.time).toArray
+    scenario.consumer_tp = samples.map(_.consumed).toArray
+    scenario.producer_tp = samples.map(_.produced).toArray
+    scenario.max_latency = samples.map(_.max_latency).toArray
+    scenario.errors = samples.map(_.errors).toArray
+
+    scenario_reports.put(scenario.parameters, scenario);
+    val report = new BenchmarkReport
+    report.benchmark_settings = benchmark_settings
+    report.scenarios = scenario_reports.values().toList.toArray
+    MAPPER.writerWithDefaultPrettyPrinter.writeValue(out, report)
   }
 
   def execute(session: CommandSession): AnyRef = {
@@ -121,48 +187,29 @@ class Benchmark extends Action {
       broker_name = out.getName.stripSuffix(".json")
     }
 
-    println("===================================================================")
-    println("Benchmarking %s at: %s".format(broker_name, url))
-    println("===================================================================")
-
-    run_benchmarks
     if( out.getParentFile!=null ) {
       out.getParentFile.mkdirs
     }
-    val os = new PrintStream(new FileOutputStream(out))
-    os.println("{")
-    os.println("""  "benchmark_settings": {""")
-    os.println("""    "broker_name": "%s",""".format(broker_name))
-    os.println("""    "url": "%s",""".format(url))
-    os.println("""    "sample_count": %d,""".format(sample_count))
-    os.println("""    "sample_interval": %d,""".format(sample_interval))
-    os.println("""    "warm_up_count": %d""".format(warm_up_count))
-    os.println("""  },""")
-    os.print("""  "scenarios":[""")
 
-    os.print(samples.map{ case (name, sample) =>
-      """  {
-    "parameters": { %s },
-    "timestamp": %s,
-    "producer tp": %s,
-    "consumer tp": %s,
-    "max latency": %s,
-    "errors": %s
-  }""".format(
-        name,
-        json_format(sample.map(_.time)),
-        json_format(sample.map(_.produced)),
-        json_format(sample.map(_.consumed)),
-        json_format(sample.map(_.max_latency)),
-        json_format(sample.map(_.errors))
-      )
-    }.mkString(",\n"))
-    os.println("]\n}")
+    // Load up the previous results so that we can just update the result file.
+    if( out.exists() ) {
+      val report = MAPPER.readValue(out, classOf[BenchmarkReport])
+      benchmark_settings = report.benchmark_settings
+      for( scenario <- report.scenarios ) {
+        scenario_reports.put(scenario.parameters, scenario)
+      }
+    }
 
-    os.close
+    if( !benchmark_settings.containsKey(broker_name) ) {
+      benchmark_settings.put("broker_name", broker_name)
+    }
+    benchmark_settings.put("url", url)
+    benchmark_settings.put("warm_up_count", warm_up_count:java.lang.Integer)
+
     println("===================================================================")
-    println("Stored: "+out)
+    println("Benchmarking %s at: %s".format(broker_name, url))
     println("===================================================================")
+    run_benchmarks
     null
   }
 
@@ -273,7 +320,7 @@ class Benchmark extends Action {
             if (collected.find(_.errors != 0).isDefined) {
               println("errors                      : %s".format(json_format(collected.map(_.errors))))
             }
-            samples.put(scenario.name, collected)
+            add_scenario_report(scenario.name, collected)
         }
       }
     } catch {
@@ -299,12 +346,14 @@ class Benchmark extends Action {
       persistent <- Array(true, false)
     ) {
 
-      var skip:String = null
-      if ( scenarios_to_skip.contains("queue_staging") ) {
+      val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
+      if ( have_scenario_report(name) ) {
+        skip = "Already have the results"
+      }
+      else if ( scenarios_to_skip.contains("queue_staging") ) {
         skip = "--skip command line option"
       }
 
-      val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
       if ( skip!=null ) {
         if ( show_skips ) {
           println()
@@ -378,8 +427,13 @@ class Benchmark extends Action {
       destination_count <- destinations_counts
     ) {
 
+      val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
+
       var skip:String = null
-      if ( scenarios_to_skip.contains("throughput") ) {
+      if ( have_scenario_report(name) ) {
+        skip = "Already have the results"
+      }
+      else if ( scenarios_to_skip.contains("throughput") ) {
         skip = "--skip command line option"
       }
       // Skip on odds scenario combinations like more destinations than clients.
@@ -402,7 +456,6 @@ class Benchmark extends Action {
         skip = "Don't benchmark large transactions /w lots of clients"
       }
 
-      val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
       if ( skip!=null ) {
         if ( show_skips ) {
           println()
@@ -430,12 +483,17 @@ class Benchmark extends Action {
       mode <- Array("topic", "queue") ;
       persistent <- Array(true, false)
     ) {
+
+      val name = """ "group": "slow_consumer", "mode": "%s", "persistent": %s """.format(mode, persistent)
+
       var skip:String = null
-      if ( scenarios_to_skip.contains("slow_consumer") ) {
+      if ( have_scenario_report(name) ) {
+        skip = "Already have the results"
+      }
+      else if ( scenarios_to_skip.contains("slow_consumer") ) {
         skip = "--skip command line option"
       }
 
-      val name = """ "group": "slow_consumer", "mode": "%s", "persistent": %s """.format(mode, persistent)
       if ( skip!=null ) {
         if ( show_skips ) {
           println()

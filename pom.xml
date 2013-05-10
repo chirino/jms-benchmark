@@ -41,6 +41,7 @@
     <maven-scala-plugin-version>2.15.0</maven-scala-plugin-version>
     <karaf-version>2.2.0</karaf-version>
     <slf4j-version>1.6.6</slf4j-version>
+    <jackson-version>2.1.0</jackson-version>
 
   </properties>
 

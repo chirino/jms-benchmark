@@ -9,17 +9,18 @@ import java.lang.management.ManagementFactory
 
 object ActiveMQScenario {
   def main(args:Array[String]):Unit = {
-    val scenario = new ActiveMQScenario
-    scenario.url = "tcp://mac-pro:61613"
+    val scenario = new org.fusesource.jmsbenchmark.ActiveMQScenario
+    scenario.url = "tcp://localhost:61616"
     scenario.display_errors = true
     scenario.user_name = "admin"
     scenario.password = "password"
     scenario.message_size = 1000
-    scenario.producers = 100
-    scenario.consumers = 100
+    scenario.producers = 1
+    scenario.consumers = 1
     scenario.persistent = true
     scenario.tx_size = 10
     scenario.destination_type = "queue"
+    scenario.destination_name = "foo,bar,zip"
     scenario.run()
   }
 }
