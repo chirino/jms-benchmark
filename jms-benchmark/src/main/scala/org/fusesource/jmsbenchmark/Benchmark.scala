@@ -340,94 +340,40 @@ class Benchmark extends Action {
     case class ScenarioDescription(name:String, execute:()=>Unit, duration:Int=(((sample_count+warm_up_count+2)*sample_interval)+2000))
     val descriptions = ListBuffer[ScenarioDescription]()
 
-    // Load up a queue for 30 seconds..
-    val load_unload_samples = 60
-    for(
-      persistent <- Array(true, false)
-    ) {
-
-      val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
-      if ( have_scenario_report(name) ) {
-        skip = "Already have the results"
-      }
-      else if ( scenarios_to_skip.contains("queue_staging") ) {
-        skip = "--skip command line option"
-      }
-
-      if ( skip!=null ) {
-        if ( show_skips ) {
-          println()
-          println("skipping  : "+name)
-          println("   reason : "+skip)
-        }
-      } else {
-        descriptions += ScenarioDescription(name, ()=>{
-          benchmark(name, sc=load_unload_samples) { g=>
-            g.destination_type = "queue"
-            g.persistent = persistent
-            g.ack_mode = "auto"
-            g.message_size = 10
-            g.tx_size = 0
-            g.producers = 10
-            g.consumers = 10
-
-            // producer will sleep midway..
-            g._producer_sleep = new SleepFn {
-              var start = 0L
-              def init(time: Long) { start = time }
-              def apply(client:Scenario#Client) = {
-                val elapsed = System.currentTimeMillis() - start
-                val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
-                if (elapsed > midpoint ) {
-                  client.shutdown()
-                  0
-                } else {
-                  0
-                }
-              }
-            }
-
-            // consumer will sleep until midway through the scenario.
-            g._consumer_sleep = new SleepFn {
-              var start = 0L
-              def init(time: Long) { start = time }
-              def apply(client:Scenario#Client) = {
-                val elapsed = System.currentTimeMillis() - start
-                val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
-                if (elapsed <  midpoint ) {
-                  midpoint - elapsed
-                } else {
-                  0
-                }
-              }
-            }
-          }
-        }, ((load_unload_samples+warm_up_count)*sample_interval)+2000 )
-      }
-    }
-
     var client_counts = List(1)
     while( (client_counts.head*10) < max_clients ) {
       client_counts ::= (client_counts.head * 10)
     }
+    client_counts = client_counts.reverse
 
     var destinations_counts = List(1)
     while( (destinations_counts.head*10) < max_destinations ) {
       destinations_counts ::= (destinations_counts.head * 10)
     }
+    destinations_counts = destinations_counts.reverse
 
     for(
+      persistent <- Array(false, true) ;
       mode <- Array("queue", "topic") ;
-      persistent <- Array(true, false) ;
-      selector_complexity <- Array(0) ; // <- Array(0,1,2,3) ; // not yet implemented.
-      consumers <- client_counts;
       producers <- client_counts;
-      message_size <- Array(10000000, 100000, 1000, 100, 10) ;
-      tx_size <- Array(100, 10, 1, 0) ;
-      destination_count <- destinations_counts
+      destination_count <- destinations_counts;
+      consumers <- client_counts;
+      message_size <- Array(10, 100, 1000, 100000, 10000000) ;
+      tx_size <- Array(0, 1, 10, 100)
     ) {
 
-      val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "selector_complexity": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, selector_complexity, destination_count, consumers, producers)
+      val name = """ "group": "throughput", "mode": "%s", "persistent": %s, "message_size": %s, "tx_size": %s, "destination_count": %s, "consumers": %s, "producers": %s""".format(mode, persistent, message_size, tx_size, destination_count, consumers, producers)
+      var scaling_dimensions = 0
+      if( message_size>10 ) scaling_dimensions += 1
+      if( tx_size>0 ) scaling_dimensions += 1
+
+      if( producers == consumers && destination_count==1 )  {
+      } else if( producers == consumers && producers==destination_count )  {
+      } else {
+        if( producers>1 ) scaling_dimensions += 1
+        if( destination_count>1 ) scaling_dimensions += 1
+        if( consumers>1 ) scaling_dimensions += 1
+      }
 
       var skip:String = null
       if ( have_scenario_report(name) ) {
@@ -444,16 +390,8 @@ class Benchmark extends Action {
         skip = "--max-clients exceeded"
       }
       // When using lots of clients, only test against small txs and small messages.
-      else if ( (producers>100 || consumers>100) && (tx_size > 1 || message_size>10) ) {
-        skip = "When using lots of clients, only test against small txs and small messages."
-      }
-      // Don't benchmark large messages /w lots of clients to avoid OOM
-      else if ( message_size >= 100000 && (consumers > 1 || producers > 1 || tx_size > 1) ) {
-        skip = "Don't benchmark large messages /w lots of clients."
-      }
-      // Don't benchmark large transactions /w lots of clients to avoid OOM
-      else if ( tx_size >= 100 && (consumers > 10 || producers > 10 || tx_size > 10) ) {
-        skip = "Don't benchmark large transactions /w lots of clients"
+      else if ( scaling_dimensions > 1 ) {
+        skip = "Scales in more than one dimension."
       }
 
       if ( skip!=null ) {
@@ -526,6 +464,72 @@ class Benchmark extends Action {
       }
     }
 
+    // Load up a queue for 30 seconds..
+    val load_unload_samples = 60
+    for(
+      persistent <- Array(true, false)
+    ) {
+
+      val name = """ "group": "queue_staging", "persistent": %s """.format(persistent)
+      if ( have_scenario_report(name) ) {
+        skip = "Already have the results"
+      }
+      else if ( scenarios_to_skip.contains("queue_staging") ) {
+        skip = "--skip command line option"
+      }
+
+      if ( skip!=null ) {
+        if ( show_skips ) {
+          println()
+          println("skipping  : "+name)
+          println("   reason : "+skip)
+        }
+      } else {
+        descriptions += ScenarioDescription(name, ()=>{
+          benchmark(name, sc=load_unload_samples) { g=>
+            g.destination_type = "queue"
+            g.persistent = persistent
+            g.ack_mode = "auto"
+            g.message_size = 10
+            g.tx_size = 0
+            g.producers = 10
+            g.consumers = 10
+
+            // producer will sleep midway..
+            g._producer_sleep = new SleepFn {
+              var start = 0L
+              def init(time: Long) { start = time }
+              def apply(client:Scenario#Client) = {
+                val elapsed = System.currentTimeMillis() - start
+                val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
+                if (elapsed > midpoint ) {
+                  client.shutdown()
+                  0
+                } else {
+                  0
+                }
+              }
+            }
+
+            // consumer will sleep until midway through the scenario.
+            g._consumer_sleep = new SleepFn {
+              var start = 0L
+              def init(time: Long) { start = time }
+              def apply(client:Scenario#Client) = {
+                val elapsed = System.currentTimeMillis() - start
+                val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
+                if (elapsed <  midpoint ) {
+                  midpoint - elapsed
+                } else {
+                  0
+                }
+              }
+            }
+          }
+        }, ((load_unload_samples+warm_up_count)*sample_interval)+2000 )
+      }
+    }
+
     var remaining = descriptions.size
     var timeRemaining = descriptions.foldLeft(0){case (x,y)=> (x+y.duration)}
     val pretty_time = new PrettyTime();
@@ -536,6 +540,8 @@ class Benchmark extends Action {
       remaining -= 1
       timeRemaining -= description.duration
     }
+
+
 
   }
 }
