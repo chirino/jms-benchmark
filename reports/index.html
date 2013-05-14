@@ -57,6 +57,7 @@
         <div>
           {{view Ember.Checkbox checkedBinding="item.show"}}
           {{benchmark.key}} / {{item.benchmark_settings.broker_name}}
+          <a {{bindAttr href="item.url"}}>raw data</a>
         </div>
         {{/each}}
       {{/each}}

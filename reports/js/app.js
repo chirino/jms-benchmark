@@ -668,8 +668,10 @@ $.ajax({ url: "index.json", dataType:"json",
     platforms.forEach(function(platform) {
       var done = function(platform_description) {
         products.forEach(function(product) {
-          $.ajax({ url: platform+"/"+product+".json", dataType:"json", success: function(data) {
+          var url = platform+"/"+product+".json";
+          $.ajax({ url: url, dataType:"json", success: function(data) {
             data.show = true;
+            data.url = url;
             data.platform = platform;
             data.platform_description = platform_description;
             App.ScenariosController.get('content').pushObject(data);
