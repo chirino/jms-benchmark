@@ -508,7 +508,7 @@ class Benchmark extends Action {
                   if( producer_rate >= 1000 ) {
                     Thread.sleep(1)
                   } else {
-                    Thread.sleep( ((1000L / producer_rate)-1).min(1) )
+                    Thread.sleep( (1000L / producer_rate).max(1) )
                   }
                 }
               }
