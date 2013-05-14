@@ -464,7 +464,7 @@ class Benchmark extends Action {
 
     // Latency scenarios.
     for(
-      producer_rate <- Array(1000, 1000*10, 1000*100, 1000*1000)
+      producer_rate <- Array(100, 1000, 1000*10, 1000*100, 1000*1000)
     ) {
 
       val name = """ "group": "latency", "producer_rate": %d """.format(producer_rate)
