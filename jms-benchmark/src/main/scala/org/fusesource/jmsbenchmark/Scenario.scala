@@ -24,9 +24,19 @@ import java.util.concurrent.{CountDownLatch, BrokenBarrierException, TimeoutExce
 
 case class DataSample(time:Long, produced:Long, consumed:Long, errors:Long, max_latency:Long)
 
-abstract class SleepFn {
-  def init(time:Long):Unit
-  def apply(client:Scenario#Client):Long
+class SleepFn {
+  def init(time:Long):Unit = {}
+  def get:Long = 0
+  def apply(client:Scenario#Client) = {}
+}
+
+case class FixedSleepFn(sleep:Long) extends SleepFn {
+  override def apply(client:Scenario#Client) = {
+    if( sleep > 0 ) {
+      Thread.sleep(sleep)
+    }
+  }
+  override def get = sleep
 }
 
 object Scenario {
@@ -49,11 +59,15 @@ trait Scenario {
   var user_name:String = _
   var password:String = _
 
-  var _producer_sleep: SleepFn = new SleepFn { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
-  def producer_sleep_= (new_value: Int) = _producer_sleep = new SleepFn{ def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
+  var _producer_sleep: SleepFn = new SleepFn()
+  def producer_sleep_= (new_value: Int) {
+    _producer_sleep = FixedSleepFn(new_value)
+  }
 
-  var _consumer_sleep: SleepFn = new SleepFn { def apply(client:Scenario#Client) = 0; def init(time: Long) {}  }
-  def consumer_sleep_= (new_value: Int) = _consumer_sleep = new SleepFn { def apply(client:Scenario#Client) = new_value; def init(time: Long) {}  }
+  var _consumer_sleep: SleepFn = new SleepFn()
+  def consumer_sleep_= (new_value: Int) {
+   _consumer_sleep = FixedSleepFn(new_value)
+  }
 
   var producers = 1
   var producers_per_sample = 0
@@ -181,12 +195,12 @@ trait Scenario {
     "  producers             = "+producers+"\n"+
     "  message_size          = "+message_size+"\n"+
     "  persistent            = "+persistent+"\n"+
-    "  producer_sleep (ms)   = "+_producer_sleep(null)+"\n"+
+    "  producer_sleep (ms)   = "+_producer_sleep.get+"\n"+
     "  headers               = "+headers.mkString(", ")+"\n"+
     "  \n"+
     "  --- Consumer Properties ---\n"+
     "  consumers             = "+consumers+"\n"+
-    "  consumer_sleep (ms)   = "+_consumer_sleep(null)+"\n"+
+    "  consumer_sleep (ms)   = "+_consumer_sleep.get+"\n"+
     "  selector              = "+selector+"\n"+
     "  durable               = "+durable+"\n"+
     ""

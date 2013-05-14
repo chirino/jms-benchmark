@@ -215,10 +215,7 @@ abstract class JMSClientScenario extends Scenario {
           update_max_latency(latency)
           consumer_counter.incrementAndGet()
 
-          val sleep  = _consumer_sleep(this)
-          if (sleep != 0) {
-            Thread.sleep(sleep)
-          }
+          _consumer_sleep(this)
           if(session.getAcknowledgeMode == Session.CLIENT_ACKNOWLEDGE) {
             msg.acknowledge();
           }
@@ -276,11 +273,7 @@ abstract class JMSClientScenario extends Scenario {
         send_message(producer, msg)
         producer_counter.incrementAndGet()
 
-        val sleep = _producer_sleep(this)
-        if (sleep != 0) {
-          Thread.sleep(sleep)
-        }
-
+        _producer_sleep(this)
         if ( tx_size != 0 ) {
           tx_counter += 1
           if ( tx_counter == tx_size) {

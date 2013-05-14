@@ -25,7 +25,7 @@ import scala.collection.JavaConversions
 import java.lang.{String, Class}
 import org.apache.felix.gogo.commands.{Option => option, Argument => argument, Command => command, CommandException, Action}
 import org.apache.felix.service.command.CommandSession
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.{TimeUnit, TimeoutException}
 import org.ocpsoft.prettytime.PrettyTime
 import java.util.Date
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -449,15 +449,72 @@ class Benchmark extends Action {
             g.producers = 1
             g.consumers = 10
             g._consumer_sleep = new SleepFn{
-              def apply(client:Scenario#Client) = {
+              override def apply(client:Scenario#Client) = {
                 // the client /w id 2 will be the slow one.
                 if ( client.id == 2 )  {
-                  500
-                } else {
-                  0
+                  Thread.sleep(500)
                 }
               }
-              def init(time: Long) {}
+            }
+          }
+        })
+      }
+    }
+
+
+    // Latency scenarios.
+    for(
+      producer_rate <- Array(1000, 1000*10, 1000*100, 1000*1000)
+    ) {
+
+      val name = """ "group": "latency", "producer_rate": """.format(producer_rate)
+
+      var skip:String = null
+      if ( have_scenario_report(name) ) {
+        skip = "Already have the results"
+      }
+      else if ( scenarios_to_skip.contains("latency") ) {
+        skip = "--skip command line option"
+      }
+
+      if ( skip!=null ) {
+        if ( show_skips ) {
+          println()
+          println("skipping  : "+name)
+          println("   reason : "+skip)
+        }
+      } else {
+        descriptions += ScenarioDescription(name, ()=>{
+          benchmark(name) { g=>
+            g.destination_type = "queue"
+            g.persistent = false
+            g.durable == false
+            g.ack_mode = "dups_ok"
+            g.message_size = 10
+            g.producers = 1
+            g.consumers = 1
+            g._producer_sleep = new SleepFn {
+              var initTS=0L
+              var sent = 0L
+
+              override def apply(client:Scenario#Client) = {
+                sent+=1
+                val now = System.nanoTime()
+                val elapsed = now-initTS
+
+                val should_have_sent = producer_rate * elapsed / TimeUnit.SECONDS.toNanos(1)
+                if( should_have_sent <= sent ) {
+                  // Producer has sent it's fair share.. sleep till we need to send again.
+                  if( producer_rate >= 1000 ) {
+                    Thread.sleep(1)
+                  } else {
+                    Thread.sleep( ((1000L / producer_rate)-1).min(1) )
+                  }
+                }
+              }
+              override def init(time: Long) {
+                initTS=System.nanoTime()
+              }
             }
           }
         })
@@ -498,15 +555,12 @@ class Benchmark extends Action {
             // producer will sleep midway..
             g._producer_sleep = new SleepFn {
               var start = 0L
-              def init(time: Long) { start = time }
-              def apply(client:Scenario#Client) = {
+              override def init(time: Long) { start = time }
+              override def apply(client:Scenario#Client) = {
                 val elapsed = System.currentTimeMillis() - start
                 val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
                 if (elapsed > midpoint ) {
                   client.shutdown()
-                  0
-                } else {
-                  0
                 }
               }
             }
@@ -514,14 +568,12 @@ class Benchmark extends Action {
             // consumer will sleep until midway through the scenario.
             g._consumer_sleep = new SleepFn {
               var start = 0L
-              def init(time: Long) { start = time }
-              def apply(client:Scenario#Client) = {
+              override def init(time: Long) { start = time }
+              override def apply(client:Scenario#Client) = {
                 val elapsed = System.currentTimeMillis() - start
                 val midpoint = (warm_up_count+(load_unload_samples/2))*sample_interval;
                 if (elapsed <  midpoint ) {
-                  midpoint - elapsed
-                } else {
-                  0
+                  Thread.sleep(midpoint - elapsed)
                 }
               }
             }
