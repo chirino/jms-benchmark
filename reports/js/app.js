@@ -145,8 +145,17 @@ App.ScenariosController = Ember.ArrayController.extend({
     var show_errors = this.get('show_errors');
         
     var group_by = {};
+    
+    var parameterKeys = App.ScenariosController.get("parameters").map(function(parameter){
+      return parameter.get("key");
+    });      
+
     var add_data = function(broker_name, scenario, metrics, units, scale_fn) {
-      var group_key = JSON.stringify(scenario.parameters)+":"+metrics      
+      var group_key_map = {}
+      parameterKeys.forEach(function(key){
+        group_key_map[key] = scenario.parameters[key]
+      })
+      var group_key = JSON.stringify(group_key_map)+":"+metrics      
       if( !group_by[group_key] ) {
         group_by[group_key] = {
           title:group_key,
@@ -382,7 +391,7 @@ App.SummaryChart = Ember.View.extend({
   click: function(evt) {
     var show_metric = this.get('metric');
     var rc = [];
-    var hold = {"group":"throughput", "mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "selector_complexity": 0, "producers": 1, "destination_count": 1, "consumers": 1}
+    var hold = {"group":"throughput", "mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "producers": 1, "destination_count": 1, "consumers": 1}
     var t = JSON.parse(this.get('hold'));
     for( i in t ) {
       hold[i] = t[i];
@@ -411,7 +420,7 @@ App.SummaryChart = Ember.View.extend({
     
     var show_metric = this.get('metric');
     var rc = [];
-    var hold = {"mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "selector_complexity": 0, "producers": 1, "destination_count": 1, "consumers": 1}
+    var hold = {"mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "producers": 1, "destination_count": 1, "consumers": 1}
     var t = JSON.parse(this.get('hold'));
     for( i in t ) {
       hold[i] = t[i];
