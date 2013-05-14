@@ -386,15 +386,23 @@ App.SummaryChart = Ember.View.extend({
   
   metric:"producer tp",
   hold:'{}',
+  hold_exactly:null,
   vary:"producers",
   
   click: function(evt) {
     var show_metric = this.get('metric');
     var rc = [];
+    
     var hold = {"group":"throughput", "mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "producers": 1, "destination_count": 1, "consumers": 1}
-    var t = JSON.parse(this.get('hold'));
-    for( i in t ) {
-      hold[i] = t[i];
+    
+    var hold_exactly = this.get('hold_exactly');
+    if( hold_exactly!=null ) {
+      hold = JSON.parse(hold_exactly);
+    } else {
+      var t = JSON.parse(this.get('hold'));
+      for( i in t ) {
+        hold[i] = t[i];
+      }
     }
     
     var vary = this.get('vary').split(",");
@@ -421,9 +429,15 @@ App.SummaryChart = Ember.View.extend({
     var show_metric = this.get('metric');
     var rc = [];
     var hold = {"mode":"queue", "persistent": false, "message_size": 10, "tx_size": 0, "producers": 1, "destination_count": 1, "consumers": 1}
-    var t = JSON.parse(this.get('hold'));
-    for( i in t ) {
-      hold[i] = t[i];
+    
+    var hold_exactly = this.get('hold_exactly');
+    if( hold_exactly!=null ) {
+      hold = JSON.parse(hold_exactly);
+    } else {
+      var t = JSON.parse(this.get('hold'));
+      for( i in t ) {
+        hold[i] = t[i];
+      }
     }
     
     var vary = this.get('vary').split(",");

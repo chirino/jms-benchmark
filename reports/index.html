@@ -98,6 +98,12 @@
           <h3>Queue Scenarios</h3>
           <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
+              <strong>Queue latencey as you scale producer throughput:</strong>
+              {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
+              {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
+              {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
+              {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
+            </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale message size:</strong>
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
