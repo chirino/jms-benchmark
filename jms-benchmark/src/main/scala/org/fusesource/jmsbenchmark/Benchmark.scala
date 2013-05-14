@@ -467,7 +467,7 @@ class Benchmark extends Action {
       producer_rate <- Array(1000, 1000*10, 1000*100, 1000*1000)
     ) {
 
-      val name = """ "group": "latency", "producer_rate": """.format(producer_rate)
+      val name = """ "group": "latency", "producer_rate": %d """.format(producer_rate)
 
       var skip:String = null
       if ( have_scenario_report(name) ) {
