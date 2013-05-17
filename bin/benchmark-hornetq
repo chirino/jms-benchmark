@@ -10,7 +10,7 @@
 true \
 ${SERVER_SETUP:=true} \
 ${SERVER_ADDRESS:=localhost} \
-${HORNETQ_VERSION:=2.3.0.CR2} \
+${HORNETQ_VERSION:=2.3.0.Final} \
 ${SERVER_NAME:="hornetq-${HORNETQ_VERSION}"} \
 ${HORNETQ_DOWNLOAD:="http://downloads.jboss.org/hornetq/hornetq-${HORNETQ_VERSION}-bin.tar.gz"}
 

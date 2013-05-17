@@ -29,7 +29,7 @@
   <name>${project.artifactId}</name>
   
   <properties>
-    <hornetq-version>2.2.5.Final</hornetq-version>
+    <hornetq-version>2.3.0.Final</hornetq-version>
 
     <url>tcp://localhost:5445</url>
     <benchmark-options/>
