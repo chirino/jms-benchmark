@@ -14,13 +14,15 @@ object ActiveMQScenario {
     scenario.display_errors = true
     scenario.user_name = "admin"
     scenario.password = "password"
-    scenario.message_size = 1000
+    scenario.message_size = 10
     scenario.producers = 1
-    scenario.consumers = 1
+    scenario.consumers = 0
     scenario.persistent = true
-    scenario.tx_size = 10
+    scenario.tx_size = 0
     scenario.destination_type = "queue"
-    scenario.destination_name = "foo,bar,zip"
+    scenario.destination_name = "load-"
+    scenario.ack_mode="client"
+    scenario.jms_bypass = true
     scenario.run()
   }
 }
@@ -34,7 +36,7 @@ object ActiveMQScenario {
  */
 class ActiveMQScenario extends JMSClientScenario {
 
-  var use_async_send_callback = java.lang.Boolean.getBoolean("use_async_send_callback")
+  var jms_bypass = java.lang.Boolean.getBoolean("jms_bypass")
 
   override protected def factory:ConnectionFactory = {
     val rc = new ActiveMQConnectionFactory
@@ -54,6 +56,14 @@ class ActiveMQScenario extends JMSClientScenario {
       }
     }
 
+    rc.setWatchTopicAdvisories(false)
+
+    if( jms_bypass ) {
+      use_message_listener = true
+      rc.setAlwaysSessionAsync(false)
+      rc.setCheckForDuplicates(false)
+    }
+
     rc
   }
 
@@ -69,7 +79,7 @@ class ActiveMQScenario extends JMSClientScenario {
   }
 
   override def send_message(producer: MessageProducer, msg: TextMessage) {
-    if( use_async_send_callback && persistent && tx_size==0 ) {
+    if( jms_bypass && persistent && tx_size==0 ) {
       producer.asInstanceOf[ActiveMQMessageProducer].send(msg, send_callback)
     } else {
       super.send_message(producer, msg)

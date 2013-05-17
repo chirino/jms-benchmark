@@ -32,6 +32,7 @@ import java.util.concurrent.CyclicBarrier
 abstract class JMSClientScenario extends Scenario {
 
   var allow_worker_interrupt = false
+  var use_message_listener = false
 
   def createProducer(i:Int) = {
     new ProducerClient(i)
@@ -208,14 +209,14 @@ abstract class JMSClientScenario extends Scenario {
       load_start_rendezvous(this, session)
 
       var tx_counter = 0
-      while( !done.get() ) {
-        val msg = consumer.receive(500)
-        if( msg!=null ) {
+
+      val listener = new MessageListener {
+        def onMessage(msg: Message) {
           val latency = System.nanoTime() - msg.getLongProperty("ts")
           update_max_latency(latency)
           consumer_counter.incrementAndGet()
 
-          _consumer_sleep(this)
+          _consumer_sleep(ConsumerClient.this)
           if(session.getAcknowledgeMode == Session.CLIENT_ACKNOWLEDGE) {
             msg.acknowledge();
           }
@@ -227,16 +228,29 @@ abstract class JMSClientScenario extends Scenario {
               tx_counter = 0
             }
           }
+        }
+      }
 
-        } else {
-          // commit early once we don't get anymore messages.
-          if ( tx_size != 0 && tx_counter > 0 ) {
-            session.commit()
-            tx_counter = 0
+      if( use_message_listener ) {
+        consumer.setMessageListener(listener)
+        while( !done.get() ) {
+          Thread.sleep(500)
+        }
+      } else {
+        while( !done.get() ) {
+          val msg = consumer.receive(500)
+          if( msg!=null ) {
+            listener.onMessage(msg)
+          } else {
+            // commit early once we don't get anymore messages.
+            if ( tx_size != 0 && tx_counter > 0 ) {
+              session.commit()
+              tx_counter = 0
+            }
           }
         }
-
       }
+      consumer.close()
     }
 
   }
