@@ -93,6 +93,9 @@ table.boxplot { border-collapse:separate; font: 10px sans-serif; margin: 0; bord
 table.boxplot tr td { text-align: center; padding: 0 10px 0 10px; vertical-align: top }
 table.boxplot tr td.chart { white-space:nowrap; }
 
+table.boxplot tr td.even { background: #eee; }
+table.boxplot tr td.odd { background: #fff; }
+
 table.boxplot tr td.legend { text-align: left; font-size:120%; max-width:200px }
 table.boxplot tr td.chart { max-width:100px }
 td.legend table { margin: .5em; }

@@ -636,9 +636,14 @@ App.SummaryChart = Ember.View.extend({
     width = width - margin.left - margin.right;
     height = height - margin.top - margin.bottom;
     
-    content.x_values.forEach(function(x) {
+    content.x_values.forEach(function(x, i) {
       row2.append("td").text(x);
-      var td = row1.append("td").attr("class", "chart")  
+      var td = row1.append("td")
+      if( i%2 == 0 ) {
+        td.attr("class", "chart even")  
+      } else {
+        td.attr("class", "chart odd")  
+      }
       content.categories.forEach(function(category, i) {
         var data = category.data[x]
         if( data ) {
