@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+  <link href="css/font-awesome.min.css" rel="stylesheet">
   <link href="css/app.css" rel="stylesheet">
 
   <script src="js/libs/d3.v3.js"></script>
@@ -94,9 +95,17 @@
   {{#if tab_selected_summary}}
     <div class="row">
       <div class="span12">
-        <h2>Non-Persistent Scenarios</h2>
+      
+        {{#view App.Toggle initial="true" valueBinding="t1"}}
+          <h2><a href="#"><i {{bindAttr class="icon"}}></i>Non-Persistent Scenarios</a></h2>
+        {{/view}}
+        {{#if t1}}
         <div style="padding:0 1em 0 1em">
-          <h3>Queue Scenarios</h3>
+          
+          {{#view App.Toggle initial="true" valueBinding="t1_1"}}
+            <h2><a href="#"><i {{bindAttr class="icon"}}></i>Queue Scenarios</a></h2>
+          {{/view}}
+          {{#if t1_1}}
           <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Queue latencey as you scale producer throughput:</strong>
@@ -142,7 +151,12 @@
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"queue"}'}}{{/if}}
             </div>
           </div>
-          <h3>Topic Scenarios</h3>
+          {{/if}}
+          
+          {{#view App.Toggle initial="false" valueBinding="t1_2"}}
+            <h2><a href="#"><i {{bindAttr class="icon"}}></i>Topic Scenarios</a></h2>
+          {{/view}}
+          {{#if t1_2}}
           <div style="padding:10px">
             <div class="scaling_scenario">
               <strong>Topic throughput as you scale message size:</strong>
@@ -182,11 +196,20 @@
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
             </div>
           </div>
+          {{/if}}
         </div>
+        {{/if}}
         <br/>
-        <h2>Persistent Scenarios</h2>
+        
+        {{#view App.Toggle initial="false" valueBinding="t2"}}
+          <h2><a href="#"><i {{bindAttr class="icon"}}></i>Persistent Scenarios</a></h2>
+        {{/view}}
+        {{#if t2}}
         <div style="padding:0 1em 0 1em">
-          <h3>Queue Scenarios</h3>
+          {{#view App.Toggle initial="false" valueBinding="t2_1"}}
+            <h2><a href="#"><i {{bindAttr class="icon"}}></i>Queue Scenarios</a></h2>
+          {{/view}}
+          {{#if t2_1}}
           <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Queue throughput as you scale message size:</strong>
@@ -226,7 +249,13 @@
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers,destination_count" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
             </div>
           </div>
-          <h3>Topic Scenarios</h3>
+          {{/if}}
+        
+          {{#view App.Toggle initial="false" valueBinding="t2_2"}}
+            <h2><a href="#"><i {{bindAttr class="icon"}}></i>Topic Scenarios</a></h2>
+          {{/view}}
+          {{#if t2_2}}
+          <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Topic throughput as you scale message size:</strong>
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
@@ -265,7 +294,9 @@
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers,destination_count" hold='{"persistent":true, "mode":"topic"}'}}{{/if}}
             </div>
           </div>
+          {{/if}}
         </div>
+        {{/if}}
       </div>
     </div>
   {{/if}}

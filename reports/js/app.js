@@ -696,3 +696,25 @@ $.ajax({ url: "index.json", dataType:"json",
   },
 });
 
+App.Toggle = Ember.View.extend({
+  value:undefined,
+  initial:false,
+
+  didInsertElement: function() {
+    var value = this.getWithDefault('value', this.get('initial'));
+    value = value===true || value=="true"
+    this.set('value', value);
+    this.set('icon', value ? 'icon-caret-down icon-fixed-width' : 'icon-caret-right icon-fixed-width');
+  },
+  
+  click:function(){
+    this.toggleProperty('value');
+    var value = this.get('value');
+    this.set('icon', value ? 'icon-caret-down icon-fixed-width' : 'icon-caret-right icon-fixed-width');
+  },  
+  
+  render: function() {
+    this.get('template')(this);
+  }  
+});
+
