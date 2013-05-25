@@ -488,7 +488,7 @@ App.SummaryChart = Ember.View.extend({
       
       if( !group.categories[broker_name] ) {
         var category = {
-          label: broker_name+" "+metrics,
+          label: broker_name,
           data: {},
         };
         group.categories[broker_name] = category
