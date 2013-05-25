@@ -82,7 +82,8 @@ abstract class JMSClientScenario extends Scenario {
 
     var close_thread:Thread = null
     def dispose {
-      if( close_thread==null ) {
+      if( this.connection!=null ) {
+        val connection = this.connection
         close_thread = new Thread(name+" closer") {
           override def run() {
             try {
@@ -93,6 +94,7 @@ abstract class JMSClientScenario extends Scenario {
           }
         }
         close_thread.start()
+        this.connection = null
       }
     }
 
@@ -109,6 +111,13 @@ abstract class JMSClientScenario extends Scenario {
                 Thread.sleep(reconnect_delay)
                 reconnect_delay=0
               }
+
+              // Don't reconnect until we finish disconnecting..
+              if( close_thread!=null ) {
+                close_thread.join()
+                close_thread = null
+              }
+
               connection = factory.createConnection(user_name, password)
               if( durable ) {
                 connection.setClientID(name)
