@@ -68,6 +68,10 @@
       <strong>Metrics:</strong>
       <div style="padding:1em; font-size:80%;">
         <div>
+          {{view Ember.Checkbox checkedBinding="show_total_tp"}}
+          Producer+Consumer Throughput
+        </div>  
+        <div>
           {{view Ember.Checkbox checkedBinding="show_producer_tp"}}
           Producer Throughput
         </div>  
@@ -109,42 +113,49 @@
           <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Queue latencey as you scale producer throughput:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producer_rate" hold_exactly='{"group":"latency"}'}}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale the consumers and producers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers,consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers,consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers,consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers,consumers" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers" hold='{"persistent":false, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale transaction size:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="tx_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="tx_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="tx_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size" hold='{"persistent":false, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale the number destinations used:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"queue"}'}}}{{/if}}
@@ -160,36 +171,42 @@
           <div style="padding:10px">
             <div class="scaling_scenario">
               <strong>Topic throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="message_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Topic throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Topic throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="consumers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Topic throughput as you scale the consumers and producers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers,consumers" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers,consumers" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers,consumers" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers,consumers" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Topic throughput as you scale transaction size:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="tx_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="tx_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="tx_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size" hold='{"persistent":false, "mode":"topic"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Topic throughput as you scale the number destinations used:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers,consumers,destination_count" hold='{"persistent":false, "mode":"topic"}'}}}{{/if}}
@@ -213,36 +230,42 @@
           <div style="padding:0 1em 0 1em">
             <div class="scaling_scenario">
               <strong>Queue throughput as you scale message size:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="message_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="message_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="message_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="message_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="message_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale producers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale consumers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="consumers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="consumers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="consumers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="consumers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="consumers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale the consumers and producers:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers,consumers" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers,consumers" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers,consumers" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers,consumers" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="producers,consumers" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale transaction size:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="tx_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="tx_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="tx_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="tx_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
               {{#if App.ScenariosController.show_errors}}     {{view App.SummaryChart contentBinding="scenario" metric="errors"      vary="tx_size" hold='{"persistent":true, "mode":"queue"}'}}{{/if}}
             </div><div class="scaling_scenario">
               <strong>Queue throughput as you scale the number destinations used:</strong>
+              {{#if App.ScenariosController.show_total_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer+consumer tp" vary="producers,consumers,destination_count" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_producer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="producer tp" vary="producers,consumers,destination_count" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_consumer_tp}}{{view App.SummaryChart contentBinding="scenario" metric="consumer tp" vary="producers,consumers,destination_count" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}
               {{#if App.ScenariosController.show_max_latency}}{{view App.SummaryChart contentBinding="scenario" metric="max latency" vary="producers,consumers,destination_count" hold='{"persistent":true, "mode":"queue"}'}}}{{/if}}

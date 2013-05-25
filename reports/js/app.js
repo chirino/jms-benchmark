@@ -58,9 +58,10 @@ App.MainController = Ember.Controller.extend({
 App.ScenariosController = Ember.ArrayController.extend({
   content: [],
   parameters:[],
-  show_producer_tp:true,
-  show_consumer_tp:true,
-  show_max_latency:false,
+  show_total_tp:true,
+  show_producer_tp:false,
+  show_consumer_tp:false,
+  show_max_latency:true,
   show_errors:false,  
   box_wisker:false, 
   
@@ -139,6 +140,7 @@ App.ScenariosController = Ember.ArrayController.extend({
       }
     }
     
+    var show_total_tp = this.get('show_total_tp');
     var show_producer_tp = this.get('show_producer_tp');
     var show_consumer_tp = this.get('show_consumer_tp');
     var show_max_latency = this.get('show_max_latency');
@@ -180,6 +182,9 @@ App.ScenariosController = Ember.ArrayController.extend({
         var broker_name = benchmark.benchmark_settings.broker_name;
         benchmark.scenarios.forEach(function(scenario) {
           if( show_scenario(scenario) ) {
+            if( show_total_tp ) {
+              add_data(broker_name, scenario, "producer+consumer tp", "msg/sec");
+            }
             if( show_producer_tp ) {
               add_data(broker_name, scenario, "producer tp", "msg/sec");
             }
@@ -206,6 +211,7 @@ App.ScenariosController = Ember.ArrayController.extend({
     return Ember.ArrayProxy.create({ content:rc });
   }.property(
     "content.@each.show", 
+    "show_total_tp", 
     "show_producer_tp", 
     "show_consumer_tp", 
     "show_max_latency",
@@ -679,6 +685,20 @@ $.ajax({ url: "index.json", dataType:"json",
             data.url = url;
             data.platform = platform;
             data.platform_description = platform_description;
+            // Lets compute the total throughput.
+            data.scenarios.forEach(function(scenario){
+              var pt = scenario["producer tp"];
+              var ct = scenario["producer tp"];
+              var tt = [];
+              for( var i=0; i < pt.length || i < ct.length; i++) {
+                var t = 0;
+                if( pt[i] ) t += pt[i];
+                if( ct[i] ) t += ct[i];
+                tt.push(t);
+              }
+              scenario["producer+consumer tp"] = tt;
+            });
+            
             App.ScenariosController.get('content').pushObject(data);
           }});
         });
