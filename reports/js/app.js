@@ -169,7 +169,8 @@ App.ScenariosController = Ember.ArrayController.extend({
       }
       var group = group_by[group_key];
       group.lines.push({
-        label: broker_name+" "+metrics,
+        label: broker_name,
+        units: units,
         x: scenario["timestamp"],
         y: scenario[metrics],
         scale_fn:scale_fn || function(x){ return x;}
@@ -334,10 +335,7 @@ App.Chart = Ember.View.extend({
       var default_label = function(node, series) {
         
         var data = series.data.map(function(item){return item[1];});
-        node.html(series.label+"<br><strong>stdev: </strong>"+
-          with_commas(data.stdDev().toFixed(2))+" <strong>mean: </strong>"+
-          with_commas(data.mean().toFixed(2))+")"
-          );
+        node.html(series.label+"<br>");
       };
       
       for (var i = 0; i < dataset.length; ++i) {

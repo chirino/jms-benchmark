@@ -146,3 +146,4 @@ div.scaling_scenario {
 	.scaling_scenario { page-break-inside:avoid; }
 }
 
+.legendColorBox {  vertical-align: top; padding-top: 5px; } 
