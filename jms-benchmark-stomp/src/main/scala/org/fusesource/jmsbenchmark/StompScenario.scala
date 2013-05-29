@@ -13,6 +13,7 @@ import org.fusesource.stomp.jms.{StompJmsTopic, StompJmsQueue, StompJmsConnectio
 class StompScenario extends JMSClientScenario {
 
   override protected def factory:ConnectionFactory = {
+    allow_worker_interrupt = true
     val rc = new StompJmsConnectionFactory
     rc.setBrokerURI(url)
     rc.setOmitHost(true)
