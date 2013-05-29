@@ -6,6 +6,7 @@ import org.apache.activemq.command.{ActiveMQTopic, ActiveMQQueue}
 import javax.management.ObjectName
 import javax.management.openmbean.CompositeData
 import java.lang.management.ManagementFactory
+import java.util.concurrent.Semaphore
 
 object ActiveMQScenario {
   def main(args:Array[String]):Unit = {
@@ -48,18 +49,19 @@ class ActiveMQScenario extends JMSClientScenario {
     val heap_usage = mbean_server.getAttribute(new ObjectName("java.lang:type=Memory"), "HeapMemoryUsage").asInstanceOf[CompositeData]
     val heap_max = heap_usage.get("max").asInstanceOf[java.lang.Long].longValue()
 
-    val prefetch_available_heap = (heap_max-(1024*1024*500))/10
-    if ( consumers*message_size > 0 ) {
+    val prefetch_available_heap = heap_max/10 // use 1/10 of the heap for prefetch.
+    if ( prefetch_available_heap > 0 && consumers*message_size > 0 ) {
       val prefech_size = prefetch_available_heap/(consumers*message_size)
-      if( prefech_size < 1000 ) {
-        rc.getPrefetchPolicy.setAll(prefech_size.toInt)
-      }
+      rc.getPrefetchPolicy.setAll(prefech_size.toInt.min(100*1000))
     }
+
+    send_semaphore = new Semaphore( (prefetch_available_heap/(producers*message_size)).min(Int.MaxValue).toInt )
 
     rc.setWatchTopicAdvisories(false)
 
     if( jms_bypass ) {
       use_message_listener = true
+      rc.getPrefetchPolicy.setAll(1000*100)
       rc.setAlwaysSessionAsync(false)
       rc.setCheckForDuplicates(false)
     }
@@ -67,18 +69,24 @@ class ActiveMQScenario extends JMSClientScenario {
     rc
   }
 
+
+  var send_semaphore:Semaphore = null
+
   val send_callback = new AsyncCallback(){
     def onException(error: JMSException) {
       if( !done.get() && display_errors ) {
         error.printStackTrace()
       }
+      send_semaphore.release()
     }
     def onSuccess() {
       // An app could use this to know if the send succeeded.
+      send_semaphore.release()
     }
   }
 
   override def send_message(producer: MessageProducer, msg: TextMessage) {
+    send_semaphore.acquire()
     if( jms_bypass && persistent && tx_size==0 ) {
       producer.asInstanceOf[ActiveMQMessageProducer].send(msg, send_callback)
     } else {
