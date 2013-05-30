@@ -81,7 +81,7 @@ abstract class JMSClientScenario extends Scenario {
     var worker:Thread = _
 
     var close_thread:Thread = null
-    def dispose {
+    def dispose = this.synchronized {
       if( this.connection!=null ) {
         val connection = this.connection
         close_thread = new Thread(name+" closer") {
