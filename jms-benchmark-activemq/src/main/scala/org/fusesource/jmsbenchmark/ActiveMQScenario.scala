@@ -86,8 +86,8 @@ class ActiveMQScenario extends JMSClientScenario {
   }
 
   override def send_message(producer: MessageProducer, msg: TextMessage) {
-    send_semaphore.acquire()
     if( jms_bypass && persistent && tx_size==0 ) {
+      send_semaphore.acquire()
       producer.asInstanceOf[ActiveMQMessageProducer].send(msg, send_callback)
     } else {
       super.send_message(producer, msg)
