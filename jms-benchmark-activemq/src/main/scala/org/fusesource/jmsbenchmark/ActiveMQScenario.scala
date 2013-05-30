@@ -58,6 +58,7 @@ class ActiveMQScenario extends JMSClientScenario {
     send_semaphore = new Semaphore( (prefetch_available_heap/(producers*message_size)).min(Int.MaxValue).toInt )
 
     rc.setWatchTopicAdvisories(false)
+    ack_mode="client"
 
     if( jms_bypass ) {
       use_message_listener = true
