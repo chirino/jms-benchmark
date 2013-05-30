@@ -17,6 +17,7 @@ class StompScenario extends JMSClientScenario {
     val rc = new StompJmsConnectionFactory
     rc.setBrokerURI(url)
     rc.setOmitHost(true)
+    rc.setDisconnectTimeout(1500);
     rc
   }
 
