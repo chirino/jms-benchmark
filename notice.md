@@ -1,5 +1,5 @@
 JMS Benchmark Copyright Notices 
 =================================
 
-Copyright 2010-2011 FuseSource Corp
+Copyright 2010-2015 Red Hat Inc.
 

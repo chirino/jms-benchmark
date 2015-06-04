@@ -10,8 +10,8 @@ WORKSPACE="${BASEDIR}/workspace"
 
 function benchmark {
   echo CLASSPATH=${CLASSPATH}
-  echo java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark $*
-  java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark ${BENCHMARK_ARGS} $*
+  echo java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark run ${BENCHMARK_ARGS} $*
+       java ${BENCHMARK_JVM_OPTS} org.fusesource.jmsbenchmark.Benchmark run ${BENCHMARK_ARGS} $*
 }
 
 mkdir -p ${WORKSPACE}

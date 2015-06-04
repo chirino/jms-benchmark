@@ -17,62 +17,71 @@
   limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.fusesource.jmsbenchmark</groupId>
-    <artifactId>jms-benchmark-project</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <relativePath>..</relativePath>
-  </parent>
-  
-  <artifactId>jms-benchmark-activemq</artifactId>
-  <name>${project.artifactId}</name>
+    <parent>
+        <groupId>org.fusesource.jmsbenchmark</groupId>
+        <artifactId>jms-benchmark-project</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
 
-  <properties>
-    <url>tcp://localhost:61616</url>
-    <user-name>admin</user-name>
-    <password>password</password>
-    <benchmark-options></benchmark-options>
-    <box>boxname</box>
-    <server>server</server>
-    <activemq-version>5.8.0</activemq-version>
-  </properties>
+    <artifactId>jms-benchmark-activemq</artifactId>
+    <name>${project.artifactId}</name>
 
-  <dependencies>
+    <properties>
+        <url>tcp://localhost:61616</url>
+        <user-name>admin</user-name>
+        <password>password</password>
+        <benchmark-options></benchmark-options>
+        <box>boxname</box>
+        <server>server</server>
+        <activemq-version>5.8.0</activemq-version>
+        <slf4j-version>1.6.6</slf4j-version>
+    </properties>
 
-    <dependency>
-      <groupId>org.fusesource.jmsbenchmark</groupId>
-      <artifactId>jms-benchmark</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.activemq</groupId>
-      <artifactId>activemq-client</artifactId>
-      <version>${activemq-version}</version>
-    </dependency>
-    <!--<dependency>-->
-      <!--<groupId>org.apache.activemq</groupId>-->
-      <!--<artifactId>activemq-all</artifactId>-->
-      <!--<version>${activemq-version}</version>-->
-    <!--</dependency>-->
+    <dependencies>
 
-  </dependencies>
+        <dependency>
+            <groupId>org.fusesource.jmsbenchmark</groupId>
+            <artifactId>jms-benchmark</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+            <version>${activemq-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j-version}</version>
+        </dependency>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2</version>
-        <configuration>
-          <mainClass>org.fusesource.jmsbenchmark.Benchmark</mainClass>
-          <commandlineArgs>--provider activemq --display-errors --url ${url} --user-name ${user-name} --password ${password} ${benchmark-options} ${basedir}/../reports/${box}/${server}.json</commandlineArgs>
-        </configuration>      
-      </plugin>
-    </plugins>
-  </build>
+        <!--<dependency>-->
+        <!--<groupId>org.apache.activemq</groupId>-->
+        <!--<artifactId>activemq-all</artifactId>-->
+        <!--<version>${activemq-version}</version>-->
+        <!--</dependency>-->
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2</version>
+                <configuration>
+                    <mainClass>org.fusesource.jmsbenchmark.Benchmark</mainClass>
+                    <commandlineArgs>--provider activemq --display-errors --url ${url} --user-name ${user-name}
+                        --password ${password} ${benchmark-options} ${basedir}/../reports/${box}/${server}.json
+                    </commandlineArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
