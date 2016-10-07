@@ -30,7 +30,7 @@ import org.ocpsoft.prettytime.PrettyTime
 import java.util.Date
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.annotation.{JsonProperty, JsonInclude}
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 import scala._
 import scala.Some
 
