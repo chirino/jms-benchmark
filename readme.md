@@ -51,3 +51,20 @@ the following commands on the instance:
     screen ./jms-benchmark-master/bin/benchmark-all
 
 The results will be stored in the ~/reports directory.
+
+## Benchmarking remote Activemq from an EC2 Amazon Linux 64 bit AMI
+
+    sudo yum install -y screen
+    curl https://nodeload.github.com/chirino/jms-benchmark/zip/master > jms-benchmark.zip
+    jar -xvf jms-benchmark.zip 
+    chmod a+x ./jms-benchmark-master/bin/*
+    screen env \
+      SERVER_SETUP=false \
+      SERVER_ADDRESS={activemq-endpoint} \
+      ACTIVEMQ_TRANSPORT={activemq-transport} \
+      ACTIVEMQ_PORT={activemq-port} \
+      ACTIVEMQ_USERNAME={activemq-user} \
+      ACTIVEMQ_PASSWORD={activemq-password} \
+      ./bin/benchmark-activemq
+
+The results will be stored in the ~/reports directory.
