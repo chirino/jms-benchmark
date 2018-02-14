@@ -10,6 +10,10 @@
 true \
 ${SERVER_SETUP:=true} \
 ${SERVER_ADDRESS:=localhost} \
+${ACTIVEMQ_PORT:=61616} \
+${ACTIVEMQ_TRANSPORT:=tcp} \
+${ACTIVEMQ_USERNAME:="admin"} \
+${ACTIVEMQ_PASSWORD:="password"} \
 ${ACTIVEMQ_VERSION:=5.8.0} \
 ${SERVER_NAME:="activemq-${ACTIVEMQ_VERSION}"} \
 ${ACTIVEMQ_DOWNLOAD:="http://archive.apache.org/dist/activemq/apache-activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz"}
@@ -59,7 +63,7 @@ fi
 cd "${BASEDIR}/jms-benchmark-activemq"
 export CLASSPATH=`${MVN} -P download org.apache.maven.plugins:maven-dependency-plugin:2.7:build-classpath "-Dactivemq-version=${ACTIVEMQ_VERSION}" | grep -v "\[" | grep -v Download`
 export CLASSPATH="${CLASSPATH}:target/classes"
-benchmark --provider activemq --display-errors --url tcp://${SERVER_ADDRESS}:61616 "${REPORTS_HOME}/${SERVER_NAME}-openwire.json"
+benchmark --provider activemq --display-errors --user-name ${ACTIVEMQ_USERNAME} --password ${ACTIVEMQ_PASSWORD} --url ${ACTIVEMQ_TRANSPORT}://${SERVER_ADDRESS}:${ACTIVEMQ_PORT} "${REPORTS_HOME}/${SERVER_NAME}-openwire.json"
 
 # Kill the broker
 if [ $SERVER_SETUP == true ] ; then
@@ -67,4 +71,5 @@ if [ $SERVER_SETUP == true ] ; then
 fi
 
 # Create a report.
+cd "${BASEDIR}"
 "${BASEDIR}/bin/benchmark-report" $*
